@@ -1,0 +1,13 @@
+[package]
+name = "mtp-filler"
+version = "0.1.0"
+edition = "2024"
+
+[dependencies]
+anyhow = "1.0.100"
+bytesize = "2.1.0"
+chrono = "0.4.42"
+dialoguer = "0.12.0"
+fastrand = "2.3.0"
+indicatif = "0.18.0"
+libmtp-rs = "0.7.7"
