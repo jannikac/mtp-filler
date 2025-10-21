@@ -16,15 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install prerequisites
-        run: sudo apt install -y libmtp
+        run: sudo apt-get install -y libmtp-dev
       - name: Build
         run: cargo build --target x86_64-unknown-linux-gnu --release
       - name: Rename binary
-        run: mv target/x86_64-unknown-linux-gnu/release/ddcrust target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}
+        run: mv target/x86_64-unknown-linux-gnu/release/mtp-filler target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}\
+          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}\
 
   build-windows:
     runs-on: windows-latest
@@ -36,9 +36,9 @@ jobs:
         run: cargo build --target x86_64-pc-windows-msvc --release
 
       - name: Rename binary
-        run: move target\x86_64-pc-windows-msvc\release\ddcrust.exe target\x86_64-pc-windows-msvc\release\ddcrust-${{ github.ref_name }}.exe
+        run: move target\x86_64-pc-windows-msvc\release\mtp-filler.exe target\x86_64-pc-windows-msvc\release\mtp-filler-${{ github.ref_name }}.exe
 
       - name: Release (Windows)
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-pc-windows-msvc/release/ddcrust-${{ github.ref_name }}.exe
+          files: target/x86_64-pc-windows-msvc/release/mtp-filler-${{ github.ref_name }}.exe
