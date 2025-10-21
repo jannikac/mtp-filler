@@ -16,7 +16,7 @@ use uuid::Uuid;
 pub fn make_progres_bar(size: u64, message: impl Into<Cow<'static, str>>) -> Result<ProgressBar> {
     let bar = ProgressBar::new(size).with_message(message).with_style(
         ProgressStyle::with_template(
-            "{msg:60}  [{wide_bar}] {percent}% ({binary_bytes}/{binary_total_bytes})",
+            "{msg:40}  [{wide_bar}] {percent}% ({binary_bytes}/{binary_total_bytes})",
         )?
         .progress_chars("## "),
     );
