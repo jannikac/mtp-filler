@@ -22,4 +22,21 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}
+          files: target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}\
+
+  build-windows:
+    runs-on: windows-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Build (Windows)
+        run: cargo build --target x86_64-pc-windows-msvc --release
+
+      - name: Rename binary
+        run: move target\x86_64-pc-windows-msvc\release\ddcrust.exe target\x86_64-pc-windows-msvc\release\ddcrust-${{ github.ref_name }}.exe
+
+      - name: Release (Windows)
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/x86_64-pc-windows-msvc/release/ddcrust-${{ github.ref_name }}.exe
