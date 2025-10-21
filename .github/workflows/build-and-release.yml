@@ -24,7 +24,7 @@ jobs:
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}\
+          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}
 
   build-windows:
     runs-on: windows-latest
