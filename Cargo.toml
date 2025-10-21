@@ -11,3 +11,4 @@ dialoguer = "0.12.0"
 fastrand = "2.3.0"
 indicatif = "0.18.0"
 libmtp-rs = "0.7.7"
+uuid = { version = "1.18.1", features = ["v4"] }

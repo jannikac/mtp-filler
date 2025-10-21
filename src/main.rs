@@ -9,6 +9,7 @@ use libmtp_rs::object::filetypes::Filetype;
 use libmtp_rs::storage::Parent;
 use libmtp_rs::storage::files::FileMetadata;
 use libmtp_rs::util::CallbackReturn;
+use uuid::Uuid;
 
 use std::borrow::Cow;
 use std::cmp;
@@ -136,7 +137,10 @@ fn create_filler_file(device: &MtpDevice, storage_id: u32) -> Result<PathBuf> {
     let filler_file_size = free_bytes - input_bytes.as_u64();
     let filler_file_size: usize = filler_file_size.try_into()?;
 
-    let filler_path = PathBuf::from("./zzz_filler.txt");
+    // put random uuid in file name to avoid overwriting an existing file with the same name
+    let uuid = Uuid::new_v4();
+
+    let filler_path = PathBuf::from(format!("./{}_filler.txt", uuid.to_string()));
 
     let f = File::create(&filler_path)?;
     let mut writer = BufWriter::new(f);
