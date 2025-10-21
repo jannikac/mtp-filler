@@ -15,7 +15,6 @@ use std::borrow::Cow;
 use std::cmp;
 use std::fs::{File, metadata, remove_file};
 use std::io::{BufWriter, Write};
-use std::os::unix::fs::MetadataExt;
 use std::path::{Path, PathBuf};
 use std::str::FromStr;
 
@@ -187,7 +186,7 @@ fn get_metadata(path: &Path) -> Result<FileMetadata> {
         .context("File name is not valid unicode")?;
     Ok(FileMetadata {
         file_name,
-        file_size: meta.size(),
+        file_size: meta.len(),
         file_type: Filetype::Unknown,
         modification_date,
     })
