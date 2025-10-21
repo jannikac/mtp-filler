@@ -196,6 +196,7 @@ fn main() -> Result<()> {
     let mut device = select_device()?;
     let storage_id = select_storage(&device)?;
     let filler_file_path = create_filler_file(&device, storage_id)?;
+    let filler_file_path = filler_file_path.canonicalize()?;
     let meta = get_metadata(&filler_file_path)?;
     send_file_to_device(&device, storage_id, &filler_file_path, meta)?;
     delete_fillter_file(&filler_file_path)?;
