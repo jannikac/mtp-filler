@@ -1,0 +1,25 @@
+name: Build and Release
+
+on:
+  push:
+    tags:
+      - "v*.*.*"
+
+env:
+  CARGO_TERM_COLOR: always
+permissions:
+  contents: write
+jobs:
+  build-linux:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - name: Build
+        run: cargo build --target x86_64-unknown-linux-gnu --release
+      - name: Rename binary
+        run: mv target/x86_64-unknown-linux-gnu/release/ddcrust target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}
+      - name: Release
+        uses: softprops/action-gh-release@v1
+        with:
+          files: target/x86_64-unknown-linux-gnu/release/ddcrust-${{ github.ref_name }}
