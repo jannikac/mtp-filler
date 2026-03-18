@@ -1,6 +1,6 @@
 [package]
 name = "mtp-filler"
-version = "0.1.1"
+version = "0.1.2"
 edition = "2024"
 
 [dependencies]
@@ -16,7 +16,10 @@ uuid = { version = "1.18.1", features = ["v4"] }
 winmtp = "0.3.1"
 widestring = "1.2.1"
 dunce = "1.0.5"
-windows = { version = "0.52", features = ["Win32_System_Com", "Win32_Devices_PortableDevices"] }
+windows = { version = "0.52", features = [
+  "Win32_System_Com",
+  "Win32_Devices_PortableDevices",
+] }
 
 [target.'cfg(unix)'.dependencies]
 libmtp-rs = "0.7.7"
