@@ -270,6 +270,7 @@ dependencies = [
  "libmtp-rs",
  "uuid",
  "widestring",
+ "windows",
  "winmtp",
 ]
 
