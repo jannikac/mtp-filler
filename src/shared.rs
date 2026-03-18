@@ -66,7 +66,7 @@ pub fn create_filler_file(current_free_bytes: ByteSize) -> Result<PathBuf> {
         writer.write_all(buffer)?;
 
         remaining_size -= to_write;
-        bar.inc(1024);
+        bar.inc(to_write.try_into()?);
     }
     bar.finish_and_clear();
     Ok(filler_path)
