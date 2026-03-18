@@ -91,7 +91,7 @@ fn send_file_to_device(
         |sent, total| {
             bar.set_length(total);
             bar.set_position(sent);
-            std::io::stdout().lock().flush().expect("Failed to flush");
+            std::io::stdout().lock().flush()?;
             CallbackReturn::Continue
         },
     )?;
