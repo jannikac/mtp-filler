@@ -71,12 +71,19 @@ fn select_storage(device: &Device) -> Result<U16CString> {
     let children_string = children
         .iter()
         .map(|v| {
+            let capacity = get_capacity(device, v.id().into()).ok();
+            let free_space = get_free_space(device, v.id().into()).ok();
+
             format!(
                 "ID {}: {} (capacity: {} free space: {})",
                 v.id().to_string_lossy(),
                 v.name().to_string_lossy(),
-                get_capacity(device, v.id().into()).unwrap(),
-                get_free_space(device, v.id().into()).unwrap()
+                capacity
+                    .map(|v| v.to_string())
+                    .unwrap_or("unknown".to_string()),
+                free_space
+                    .map(|v| v.to_string())
+                    .unwrap_or("unknown".to_string())
             )
         })
         .collect::<Vec<_>>();

@@ -63,7 +63,7 @@ pub fn create_filler_file(current_free_bytes: ByteSize) -> Result<PathBuf> {
         let to_write = cmp::min(remaining_size, buffer.len());
         let buffer = &mut buffer[..to_write];
         fastrand::fill(buffer);
-        writer.write(buffer).unwrap();
+        writer.write(buffer)?;
 
         remaining_size -= to_write;
         bar.inc(1024);
