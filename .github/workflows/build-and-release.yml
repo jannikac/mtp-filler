@@ -20,11 +20,11 @@ jobs:
       - name: Build
         run: cargo build --target x86_64-unknown-linux-gnu --release
       - name: Rename binary
-        run: mv target/x86_64-unknown-linux-gnu/release/mtp-filler target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}
+        run: mv target/x86_64-unknown-linux-gnu/release/mtp-filler target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}
+          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
 
   build-windows:
     runs-on: windows-latest
