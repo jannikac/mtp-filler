@@ -1,4 +1,3 @@
-use std::ffi::OsStr;
 use std::fs::File;
 use std::io::{Read, Write};
 use std::path::Path;
@@ -8,18 +7,11 @@ use bytesize::ByteSize;
 use dialoguer::Select;
 use dunce::canonicalize;
 use widestring::U16CString;
-use windows::Win32::System::Com::{CLSCTX_ALL, CoCreateInstance};
-use windows::core::{GUID, PCWSTR, PWSTR};
 use winmtp::{
     PROPERTYKEY,
-    PortableDevices::{IPortableDeviceContent, IPortableDeviceValues, PortableDeviceValues},
-    PortableDevices::{
-        WPD_OBJECT_ORIGINAL_FILE_NAME, WPD_OBJECT_PARENT_ID, WPD_OBJECT_SIZE, WPD_STORAGE_CAPACITY,
-        WPD_STORAGE_FREE_SPACE_IN_BYTES,
-    },
+    PortableDevices::{WPD_STORAGE_CAPACITY, WPD_STORAGE_FREE_SPACE_IN_BYTES},
     Provider,
     device::Device,
-    io::WriteStream,
 };
 
 use crate::shared::{create_filler_file, delete_fillter_file, make_progres_bar};
@@ -118,11 +110,10 @@ fn send_file_to_device(
 
     let content = device.content()?;
     let storage = content.object_by_id(storage_id)?;
-    let file_properties = make_values_for_create_file(storage.id().into(), file_name, file_size)?;
-    let mut dest_writer = make_dest_writer(content.com_object(), &file_properties)?;
+    let mut dest_writer = storage.open_write_stream(file_name, file_size)?;
     let mut source_reader = File::open(file_path)?;
     let mut bytes_sent = 0_u64;
-    let buffer_size = dest_writer.optimal_transfer_size().max(64 * 1024);
+    let buffer_size = dest_writer.capacity().max(64 * 1024);
     let mut buffer = vec![0_u8; buffer_size];
 
     loop {
@@ -137,59 +128,9 @@ fn send_file_to_device(
         std::io::stdout().lock().flush()?;
     }
 
-    dest_writer.commit()?;
+    dest_writer.flush()?;
     bar.finish_and_clear();
     Ok(())
-}
-
-fn make_values_for_create_file(
-    parent_id: U16CString,
-    file_name: &OsStr,
-    file_size: u64,
-) -> Result<IPortableDeviceValues> {
-    let device_values: IPortableDeviceValues =
-        unsafe { CoCreateInstance(&PortableDeviceValues as *const GUID, None, CLSCTX_ALL) }?;
-
-    let file_name_wide = U16CString::from_os_str_truncate(file_name);
-    let file_name_wide_ptr = PCWSTR::from_raw(file_name_wide.as_ptr());
-    unsafe {
-        device_values.SetStringValue(
-            &WPD_OBJECT_PARENT_ID as *const _,
-            PCWSTR::from_raw(parent_id.as_ptr()),
-        )
-    }?;
-    unsafe { device_values.SetUnsignedLargeIntegerValue(&WPD_OBJECT_SIZE as *const _, file_size) }?;
-    unsafe {
-        device_values.SetStringValue(
-            &WPD_OBJECT_ORIGINAL_FILE_NAME as *const _,
-            file_name_wide_ptr,
-        )
-    }?;
-
-    Ok(device_values)
-}
-
-fn make_dest_writer(
-    com_object: &IPortableDeviceContent,
-    file_properties: &IPortableDeviceValues,
-) -> Result<WriteStream> {
-    let mut write_stream = None;
-    let mut optimal_write_buffer_size = 0;
-    let mut cookie = PWSTR::null();
-    unsafe {
-        com_object.CreateObjectWithPropertiesAndData(
-            file_properties,
-            &mut write_stream as *mut _,
-            &mut optimal_write_buffer_size,
-            &mut cookie as *mut PWSTR,
-        )
-    }?;
-
-    let write_stream = write_stream.context("Unable to create destination write stream")?;
-    Ok(WriteStream::new(
-        write_stream,
-        optimal_write_buffer_size as usize,
-    ))
 }
 
 pub fn run() -> Result<()> {

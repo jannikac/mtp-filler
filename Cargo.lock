@@ -689,8 +689,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 [[package]]
 name = "winmtp"
 version = "0.3.1"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "f653ca661e81105aa403b663fc5b98ffef518a2517abf1e8b9f94c322e883f2e"
+source = "git+https://github.com/jannikac/winmtp.git?branch=add-write-streams#4247f1447fb00651f620fe8c615459ebfd0a9568"
 dependencies = [
  "thiserror",
  "widestring",

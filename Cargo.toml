@@ -13,7 +13,7 @@ indicatif = "0.18.0"
 uuid = { version = "1.18.1", features = ["v4"] }
 
 [target.'cfg(windows)'.dependencies]
-winmtp = "0.3.1"
+winmtp = { git = "https://github.com/jannikac/winmtp.git", branch = "add-write-streams" }
 widestring = "1.2.1"
 dunce = "1.0.5"
 windows = { version = "0.52", features = [
