@@ -48,6 +48,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install prerequisites (macOS arm64)
+        run: |
+          brew update
+          brew install libmtp pkg-config
 
       - name: Build (macOS arm64)
         run: cargo build --release
@@ -65,6 +69,10 @@ jobs:
 
     steps:
       - uses: actions/checkout@v3
+      - name: Install prerequisites (macOS x86_64)
+        run: |
+          brew update
+          brew install libmtp pkg-config
 
       - name: Build (macOS x86_64)
         run: cargo build --release
