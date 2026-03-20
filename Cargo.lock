@@ -237,8 +237,6 @@ dependencies = [
 [[package]]
 name = "libmtp-sys"
 version = "1.1.17-5"
-source = "registry+https://github.com/rust-lang/crates.io-index"
-checksum = "30dead7582c263b66ec156e9d82a5e33cb403adf59b99f7ec2224e92f13fa2b4"
 dependencies = [
  "libc",
  "pkg-config",
