@@ -90,7 +90,7 @@ fn build_vendored() -> Result<(), String> {
             ],
             &common,
         )?;
-        build_autotools(
+        build_libmtp(
             "libmtp",
             &tarballs[1],
             &build_root.join("libmtp"),
@@ -102,6 +102,7 @@ fn build_vendored() -> Result<(), String> {
                 "--disable-mtpz".to_string(),
             ],
             &common,
+            &prefix,
         )?;
         fs::write(&stamp, b"ok").map_err(|err| format!("write {}: {err}", stamp.display()))?;
     }
@@ -257,6 +258,56 @@ fn build_autotools(
         apply_common_env(Command::new("make").current_dir(src_dir).arg("install"), common),
         &format!("make install {name}"),
     )?;
+
+    Ok(())
+}
+
+fn build_libmtp(
+    name: &str,
+    archive: &Path,
+    src_dir: &Path,
+    configure_args: &[String],
+    common: &CommonEnv,
+    prefix: &Path,
+) -> Result<(), String> {
+    extract_archive(archive, src_dir)?;
+    let mut configure_args = configure_args.to_vec();
+    if let Some(build_arg) = &common.build_arg {
+        configure_args.push(format!("--build={build_arg}"));
+    }
+    if let Some(host_arg) = &common.host_arg {
+        configure_args.push(format!("--host={host_arg}"));
+    }
+
+    run(
+        apply_common_env(
+            Command::new("./configure")
+                .current_dir(src_dir)
+                .args(&configure_args),
+            common,
+        ),
+        &format!("configure {name}"),
+    )?;
+
+    let jobs = env::var("NUM_JOBS").unwrap_or_else(|_| "1".to_string());
+    run(
+        apply_common_env(
+            Command::new("make")
+                .current_dir(src_dir.join("src"))
+                .arg(format!("-j{jobs}")),
+            common,
+        ),
+        &format!("make {name} library"),
+    )?;
+    run(
+        apply_common_env(Command::new("make").current_dir(src_dir.join("src")).arg("install"), common),
+        &format!("make install {name} library"),
+    )?;
+
+    let pkgconfig_dir = prefix.join("lib/pkgconfig");
+    fs::create_dir_all(&pkgconfig_dir).map_err(|err| format!("mkdir {}: {err}", pkgconfig_dir.display()))?;
+    fs::copy(src_dir.join("libmtp.pc"), pkgconfig_dir.join("libmtp.pc"))
+        .map_err(|err| format!("copy libmtp.pc: {err}"))?;
 
     Ok(())
 }
