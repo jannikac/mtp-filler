@@ -16,7 +16,7 @@ jobs:
     steps:
       - uses: actions/checkout@v3
       - name: Install prerequisites
-        run: sudo apt-get update && sudo apt-get install -y musl-tools pkg-config make gawk
+        run: sudo apt-get update && sudo apt-get install -y musl-tools linux-libc-dev pkg-config make gawk
       - name: Add musl target
         run: rustup target add x86_64-unknown-linux-musl
       - name: Build
