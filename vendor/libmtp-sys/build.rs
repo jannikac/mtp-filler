@@ -157,6 +157,9 @@ impl CommonEnv {
         let mut cppflags = format!("-I{}", prefix.join("include").display());
         if target.ends_with("-linux-musl") {
             cppflags.push_str(" -idirafter /usr/include");
+            if let Some(multiarch_include) = debian_multiarch_include(&host) {
+                cppflags.push_str(&format!(" -idirafter {}", multiarch_include.display()));
+            }
         }
         let cppflags = prepend_space_env("CPPFLAGS", &cppflags);
         let ldflags = prepend_space_env(
@@ -346,4 +349,10 @@ fn command_exists(program: &str) -> bool {
     env::var_os("PATH")
         .map(|paths| env::split_paths(&paths).any(|path| path.join(program).exists()))
         .unwrap_or(false)
+}
+
+fn debian_multiarch_include(host: &str) -> Option<PathBuf> {
+    let arch = host.split('-').next()?;
+    let candidate = PathBuf::from(format!("/usr/include/{}-linux-gnu", arch));
+    candidate.exists().then_some(candidate)
 }
