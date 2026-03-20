@@ -130,6 +130,7 @@ struct CommonEnv {
     is_cross_target: bool,
     path: String,
     pkg_config_path: String,
+    pkg_config_all_static: String,
     cppflags: String,
     cflags: String,
     cxxflags: String,
@@ -152,6 +153,8 @@ impl CommonEnv {
             prefix.join("lib/pkgconfig").display(),
             prefix.join("lib64/pkgconfig").display()
         );
+        let pkg_config_all_static =
+            env::var("PKG_CONFIG_ALL_STATIC").unwrap_or_else(|_| "1".to_string());
         let bin_dir = prefix.join("bin");
         let path = prepend_env("PATH", &bin_dir.to_string_lossy());
         let mut cppflags = format!("-I{}", prefix.join("include").display());
@@ -198,6 +201,7 @@ impl CommonEnv {
             is_cross_target,
             path,
             pkg_config_path,
+            pkg_config_all_static,
             cppflags,
             cflags,
             cxxflags,
@@ -308,6 +312,7 @@ fn apply_common_env<'a>(command: &'a mut Command, common: &CommonEnv) -> &'a mut
     command
         .env("PATH", &common.path)
         .env("PKG_CONFIG_PATH", &common.pkg_config_path)
+        .env("PKG_CONFIG_ALL_STATIC", &common.pkg_config_all_static)
         .env("CPPFLAGS", &common.cppflags)
         .env("CFLAGS", &common.cflags)
         .env("CXXFLAGS", &common.cxxflags)
