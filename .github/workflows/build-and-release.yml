@@ -14,23 +14,27 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites
-        run: sudo apt-get install -y libmtp-dev
+        run: sudo apt-get update && sudo apt-get install -y musl-tools linux-libc-dev pkg-config make gawk
+      - name: Add musl target
+        run: rustup target add x86_64-unknown-linux-musl
       - name: Build
-        run: cargo build --target x86_64-unknown-linux-gnu --release
+        run: cargo build --target x86_64-unknown-linux-musl --release
+        env:
+          CC_x86_64_unknown_linux_musl: musl-gcc
       - name: Rename binary
-        run: mv target/x86_64-unknown-linux-gnu/release/mtp-filler target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
+        run: mv target/x86_64-unknown-linux-musl/release/mtp-filler target/x86_64-unknown-linux-musl/release/mtp-filler-${{ github.ref_name }}-linux-static
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-gnu/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
+          files: target/x86_64-unknown-linux-musl/release/mtp-filler-${{ github.ref_name }}-linux-static
 
   build-windows:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build (Windows)
         run: cargo build --target x86_64-pc-windows-msvc --release
@@ -47,7 +51,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites (macOS arm64)
         run: |
           brew update
@@ -68,7 +72,7 @@ jobs:
     runs-on: macos-15-intel
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites (macOS x86_64)
         run: |
           brew update

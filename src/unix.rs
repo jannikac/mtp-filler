@@ -1,4 +1,4 @@
-use anyhow::{Context, Result};
+use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
 use chrono::{DateTime, Utc};
 use dialoguer::Select;
@@ -16,6 +16,10 @@ use crate::shared::{create_filler_file, delete_fillter_file, make_progres_bar};
 
 fn select_device() -> Result<MtpDevice> {
     let raw_devices = detect_raw_devices()?;
+    if raw_devices.is_empty() {
+        return Err(anyhow!("No attached MTP devices detected"));
+    }
+
     let raw_devices_string = raw_devices
         .iter()
         .enumerate()
@@ -46,6 +50,10 @@ fn select_device() -> Result<MtpDevice> {
 fn select_storage(device: &MtpDevice) -> Result<u32> {
     let storage_pools = device.storage_pool();
     let storage_pool_vec = storage_pools.iter().collect::<Vec<_>>();
+    if storage_pool_vec.is_empty() {
+        return Err(anyhow!("No storage found on selected device"));
+    }
+
     let storage_pool_strings = storage_pools
         .iter()
         .map(|(_, storage)| {

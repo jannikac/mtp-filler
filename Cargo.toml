@@ -1,7 +1,10 @@
 [package]
 name = "mtp-filler"
-version = "0.1.3"
+version = "0.1.5"
 edition = "2024"
+
+[patch.crates-io]
+libmtp-sys = { path = "vendor/libmtp-sys" }
 
 [dependencies]
 anyhow = "1.0.100"
