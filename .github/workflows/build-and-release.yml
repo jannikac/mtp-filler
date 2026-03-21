@@ -14,7 +14,7 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites
         run: sudo apt-get update && sudo apt-get install -y musl-tools linux-libc-dev pkg-config make gawk
       - name: Add musl target
@@ -34,7 +34,7 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
 
       - name: Build (Windows)
         run: cargo build --target x86_64-pc-windows-msvc --release
@@ -51,7 +51,7 @@ jobs:
     runs-on: macos-latest
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites (macOS arm64)
         run: |
           brew update
@@ -72,7 +72,7 @@ jobs:
     runs-on: macos-15-intel
 
     steps:
-      - uses: actions/checkout@v3
+      - uses: actions/checkout@v4
       - name: Install prerequisites (macOS x86_64)
         run: |
           brew update
