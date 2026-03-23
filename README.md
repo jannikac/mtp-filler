@@ -68,7 +68,7 @@ Open `System Settings` -> `Privacy & Security`, allow the app to run, and then s
 - No AI was used in the core implementaton and cli.
 - AI was used for the following components / parts
   - Patching winmtp library to enable a progress bar on Windows
-  - Vendored libmtp so a fully static library can be built. If you dont trust it, build it from source and use the dynamically linked version. The vendored version should be the same as the upstream version, it just has a build.rs script that builds the static version of the `libmtp` and `libusb` libraries.
+  - Vendored libmtp so Linux builds do not depend on a system `libmtp` development package. The vendored version should be the same as the upstream version, it just has a `build.rs` script that builds bundled copies of `libmtp` and `libusb`.
 
 ## Building
 
@@ -80,31 +80,25 @@ Builds are provided via Github releases. You can also build the Software yoursel
 
 ### Linux
 
-There are two supported Linux build modes.
-
-#### Fully static build - default for releases
-
-For a fully static Linux executable, use the vendored `libmtp-sys` in [`vendor/libmtp-sys`] together with the musl target:
+Linux builds use the vendored `libmtp-sys` in [`vendor/libmtp-sys`] by default, so you do not need to install a system `libmtp` development package first. Build with:
 
 ```bash
-cargo build --release --target x86_64-unknown-linux-musl
+cargo build --release
 ```
 
-The musl binary will be written to `target/x86_64-unknown-linux-musl/release/mtp-filler`.
+The binary will be written to `target/release/mtp-filler`.
 
-This path builds bundled static copies of `libusb` and `libmtp` during `cargo build`, and the resulting musl binary is fully static.
+This path builds bundled copies of `libusb` and `libmtp` during `cargo build`. The final executable can still use the host system's normal dynamic runtime libraries.
 
 The vendored build disables MTPZ support, so legacy Zune-era MTPZ devices are not supported by this program. This also avoids the extra `libgcrypt` and `libgpg-error` dependency chain.
 
-#### Fully dynamically linked build - only use if you cant use musl / fully statically linked binaries
-
-Install the development version of [libmtp](http://libmtp.sourceforge.net/) via your package manager or other means. For example `libmtp` on Arch or `libmtp-dev` on Ubuntu. Then build with:
+If you want to use the system `libmtp` instead, install the development package for your distribution first, for example `libmtp` on Arch or `libmtp-dev` on Ubuntu, and then build with:
 
 ```bash
 LIBMTP_SYS_USE_PKG_CONFIG=1 cargo build --release
 ```
 
-This uses the system `libmtp` installation discovered through `pkg-config`, so the resulting executable depends on the host system's shared libraries at runtime.
+That makes the build script skip the vendored copy and discover `libmtp` through `pkg-config` instead.
 
 ### Windows
 
