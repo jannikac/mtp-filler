@@ -16,19 +16,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install prerequisites
-        run: sudo apt-get update && sudo apt-get install -y musl-tools linux-libc-dev pkg-config make gawk
-      - name: Add musl target
-        run: rustup target add x86_64-unknown-linux-musl
+        run: sudo apt-get update && sudo apt-get install -y pkg-config make gawk
       - name: Build
-        run: cargo build --target x86_64-unknown-linux-musl --release
-        env:
-          CC_x86_64_unknown_linux_musl: musl-gcc
+        run: cargo build --release
       - name: Rename binary
-        run: mv target/x86_64-unknown-linux-musl/release/mtp-filler target/x86_64-unknown-linux-musl/release/mtp-filler-${{ github.ref_name }}-linux-static
+        run: mv target/release/mtp-filler target/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
       - name: Release
         uses: softprops/action-gh-release@v1
         with:
-          files: target/x86_64-unknown-linux-musl/release/mtp-filler-${{ github.ref_name }}-linux-static
+          files: target/release/mtp-filler-${{ github.ref_name }}-linux
 
   build-windows:
     runs-on: windows-latest
