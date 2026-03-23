@@ -1,0 +1,96 @@
+import {
+    Button,
+    ComboBox,
+    LineEdit,
+    CheckBox,
+    VerticalBox,
+    HorizontalBox,
+} from "std-widgets.slint";
+export component MainWindow inherits Window {
+    width: 400px;
+    height: 300px;
+
+    in property <[string]> combo_options: [];
+    in property <string> select_device_text: "";
+
+    callback refresh_clicked();
+
+    VerticalBox {
+        spacing: 16px;
+        VerticalLayout {
+        Text {
+            text: "Select device to use";
+        }
+
+        HorizontalLayout {
+            ComboBox {
+                width: 300px;
+                model: root.combo_options;
+                current-index: -1;
+                accessible-placeholder-text: "asdf";
+                accessible-label: "asdf";
+            }
+
+            Button {
+                text: "🔄 Refresh";
+                accessible-label: "Refresh";
+                clicked => {
+                    root.refresh_clicked();
+                }
+            }
+        }
+
+        if root.select_device_text != "" : Text {
+            text: root.select_device_text;
+        }}
+
+        property <string> shared_text: "";
+
+        VerticalLayout {
+        Text {
+            text: "Space to leave";
+        }
+
+        input := LineEdit {
+            text <=> shared_text;
+        }}
+
+        HorizontalLayout {
+            Button {
+                text: "20 MiB";
+                clicked => {
+                    shared_text = "20MiB";
+                }
+            }
+
+            Button {
+                text: "50 MiB";
+                clicked => {
+                    shared_text = "50MiB";
+                }
+            }
+
+            Button {
+                text: "75 MiB";
+                clicked => {
+                    shared_text = "75MiB";
+                }
+            }
+
+            Button {
+                text: "100 MiB";
+                clicked => {
+                    shared_text = "100MiB";
+                }
+            }
+        }
+
+        CheckBox {
+            text: "Keep local filler file after write";
+        }
+
+        Button {
+            text: "Write to device";
+        }
+    }
+}
