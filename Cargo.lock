@@ -849,7 +849,7 @@ checksum = "589f6da84c646204747d1270a2a5661ea66ed1cced2631d546fdfb155959f9ec"
 [[package]]
 name = "winmtp"
 version = "0.3.1"
-source = "git+https://github.com/jannikac/winmtp.git?branch=add-write-streams#7a5602fa82045f92cefedcb89ab108fe1f4d32c4"
+source = "git+https://github.com/jannikac/winmtp.git?branch=add-write-streams#f663a8c206b7ed943dbabc8cd425f8693aaa4292"
 dependencies = [
  "thiserror",
  "widestring",

@@ -110,7 +110,7 @@ fn send_file_to_device(
 
     let content = device.content()?;
     let storage = content.object_by_id(storage_id)?;
-    let mut dest_writer = storage.open_write_stream(file_name, file_size)?;
+    let mut dest_writer = storage.create_write_stream(file_name, file_size)?;
     let mut source_reader = File::open(file_path)?;
     let mut bytes_sent = 0_u64;
     let buffer_size = dest_writer.capacity().max(64 * 1024);
