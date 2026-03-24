@@ -34,6 +34,7 @@ pub enum BackendCommand {
         selected_index: usize,
         keep_local: bool,
     },
+    Exit,
 }
 
 pub enum BackendWrite {

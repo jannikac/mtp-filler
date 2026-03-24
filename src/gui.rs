@@ -60,7 +60,7 @@ pub fn run_gui() -> Result<()> {
     // worker-thread
     // owns the device handles and handles long-running tasks
     // handles are not send which is why they will remain in worker thread
-    std::thread::spawn(move || {
+    let worker_thread = std::thread::spawn(move || {
         let mut app_state = AppState::new();
 
         while let Ok(cmd) = cmd_rx.recv() {
@@ -83,6 +83,7 @@ pub fn run_gui() -> Result<()> {
                     );
                     evt_tx.send(BackendEvent::Write(BackendWrite::Completed(res)));
                 }
+                BackendCommand::Exit => break,
             }
         }
     });
@@ -90,12 +91,12 @@ pub fn run_gui() -> Result<()> {
     // sync-thread
     // thread that updates slint ui based on events from channel
     let cmd_tx_sync_thread = cmd_tx.clone();
-    std::thread::spawn(move || {
+    let sync_thread = std::thread::spawn(move || {
         while let Ok(evt) = evt_rx.recv() {
             let weak = main_window_weak_sync_thread.clone();
             let cmd_tx = cmd_tx_sync_thread.clone();
 
-            slint::invoke_from_event_loop(move || {
+            let res = slint::invoke_from_event_loop(move || {
                 let window = weak.upgrade().unwrap();
                 match evt {
                     BackendEvent::RefreshFinished(refresh_result) => match refresh_result {
@@ -142,7 +143,10 @@ pub fn run_gui() -> Result<()> {
                     },
                 }
             })
-            .expect("Failed to add event to slint loop");
+            .is_err();
+            if res {
+                break;
+            }
         }
     });
 
@@ -190,5 +194,15 @@ pub fn run_gui() -> Result<()> {
         });
     }
 
-    main_window.run().context("Failed to run gui")
+    main_window.run().context("Failed to run gui")?;
+
+    // exit cleanly
+    cmd_tx.send(BackendCommand::Exit)?;
+    worker_thread
+        .join()
+        .map_err(|_| anyhow!("Worker thread panicked"))?;
+    sync_thread
+        .join()
+        .map_err(|_| anyhow!("Sync thread panicked"))?;
+    Ok(())
 }
