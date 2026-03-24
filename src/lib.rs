@@ -1,4 +1,4 @@
-use std::{collections::HashMap, fmt::Display};
+use std::{collections::HashMap, fmt::Display, time::Duration};
 
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
@@ -217,5 +217,15 @@ impl AppState {
                 })
             })
             .collect::<Vec<_>>()
+    }
+    pub fn write_mtp_file(
+        &self,
+        space_to_leave: ByteSize,
+        selected_device: &SelectOption,
+        keep_local: bool,
+    ) -> Result<()> {
+        // simulate write
+        std::thread::sleep(Duration::from_secs(5));
+        Ok(())
     }
 }
