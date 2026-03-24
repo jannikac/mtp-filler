@@ -1,12 +1,30 @@
 use anyhow::Result;
-use mtp_filler::{BackendEvent, BackendWrite};
+use clap::{Parser, Subcommand};
 
-use crate::gui::run_gui;
-
+mod cli;
 mod gui;
 mod shared;
 
+pub use mtp_filler::{BackendEvent, BackendWrite};
+
+#[derive(Parser)]
+#[command(version, about)]
+struct Args {
+    #[command(subcommand)]
+    command: Option<Command>,
+}
+
+#[derive(Subcommand)]
+enum Command {
+    #[command(about = "Run the terminal-based CLI instead of the GUI")]
+    Cli,
+}
+
 fn main() -> Result<()> {
-    run_gui()?;
-    Ok(())
+    let args = Args::parse();
+
+    match args.command {
+        Some(Command::Cli) => cli::run_cli(),
+        None => gui::run_gui(),
+    }
 }
