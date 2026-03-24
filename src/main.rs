@@ -81,9 +81,11 @@ fn main() -> Result<()> {
 
     // sync-thread
     // thread that updates slint ui based on events from channel
+    let cmd_tx_sync_thread = cmd_tx.clone();
     std::thread::spawn(move || {
         while let Ok(evt) = evt_rx.recv() {
             let weak = main_window_weak_sync_thread.clone();
+            let cmd_tx = cmd_tx_sync_thread.clone();
 
             slint::invoke_from_event_loop(move || {
                 let window = weak.upgrade().unwrap();
@@ -109,6 +111,7 @@ fn main() -> Result<()> {
                         }
                         BackendWrite::Completed(result) => match result {
                             Ok(()) => {
+                                cmd_tx.send(BackendCommand::Refresh);
                                 window.set_is_busy(false);
                                 window.set_space_to_leave_error("".into());
                                 window.set_show_error_dialog(false);
@@ -116,6 +119,7 @@ fn main() -> Result<()> {
                                 window.set_progress_message("Finished".into());
                             }
                             Err(e) => {
+                                cmd_tx.send(BackendCommand::Refresh);
                                 window.set_is_busy(false);
                                 window.set_progress_message("".into());
                                 window.set_sent_bytes(0);
