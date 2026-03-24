@@ -1,12 +1,11 @@
 slint::include_modules!();
 use std::str::FromStr;
+use std::sync::mpsc::Sender;
 
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
-use mtp_filler::AppState;
+use mtp_filler::{AppState, BackendCommand, BackendEvent, BackendWrite};
 use slint::SharedString;
-use std::cell::RefCell;
-use std::rc::Rc;
 
 #[cfg(windows)]
 mod windows;
@@ -15,20 +14,6 @@ mod windows;
 mod unix;
 
 mod shared;
-
-enum BackendCommand {
-    Refresh,
-    Write {
-        space_to_leave: ByteSize,
-        selected_index: usize,
-        keep_local: bool,
-    },
-}
-
-enum BackendEvent {
-    RefreshFinished(anyhow::Result<Vec<slint::SharedString>>),
-    WriteFinished(Result<()>),
-}
 
 // handlers for commands
 fn handle_refresh(app_state: &mut AppState) -> Result<Vec<SharedString>> {
@@ -46,12 +31,13 @@ fn handle_write(
     space_to_leave: ByteSize,
     selected_index: usize,
     keep_local: bool,
+    evt_tx: Sender<BackendEvent>,
 ) -> Result<()> {
     let selected_option = app_state
         .select_options
         .get(selected_index)
         .ok_or_else(|| anyhow!("Invalid device selection"))?;
-    app_state.write_mtp_file(space_to_leave, selected_option, keep_local)?;
+    app_state.write_mtp_file(space_to_leave, selected_option, keep_local, evt_tx)?;
     Ok(())
 }
 
@@ -80,9 +66,14 @@ fn main() -> Result<()> {
                     selected_index,
                     keep_local,
                 } => {
-                    let res =
-                        handle_write(&mut app_state, space_to_leave, selected_index, keep_local);
-                    evt_tx.send(BackendEvent::WriteFinished(res));
+                    let res = handle_write(
+                        &mut app_state,
+                        space_to_leave,
+                        selected_index,
+                        keep_local,
+                        evt_tx.clone(),
+                    );
+                    evt_tx.send(BackendEvent::Write(BackendWrite::Completed(res)));
                 }
             }
         }
@@ -109,9 +100,14 @@ fn main() -> Result<()> {
                                 .set_select_device_error(slint::SharedString::from(e.to_string()));
                         }
                     },
-                    BackendEvent::WriteFinished(_) => {
-                        window.set_select_device_error(slint::SharedString::from("done"));
-                    }
+                    BackendEvent::Write(event) => match event {
+                        BackendWrite::InProgress(sent, total) => {
+                            println!("{}/{}", sent, total)
+                        }
+                        BackendWrite::Completed(_) => {
+                            window.set_select_device_error(slint::SharedString::from("done"))
+                        }
+                    },
                 }
             })
             .expect("Failed to add event to slint loop");
@@ -145,7 +141,7 @@ fn main() -> Result<()> {
                 }
             };
 
-            cmd_tx.send(BackendCommand::Write {
+            let _ = cmd_tx.send(BackendCommand::Write {
                 space_to_leave,
                 selected_index,
                 keep_local,
@@ -157,7 +153,7 @@ fn main() -> Result<()> {
         let cmd_tx = cmd_tx.clone();
 
         main_window.on_refresh_clicked(move || {
-            cmd_tx.send(BackendCommand::Refresh);
+            let _ = cmd_tx.send(BackendCommand::Refresh);
         });
     }
 

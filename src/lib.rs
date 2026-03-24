@@ -1,15 +1,48 @@
-use std::{collections::HashMap, fmt::Display, time::Duration};
+use std::{
+    collections::HashMap,
+    fmt::Display,
+    fs::{metadata, remove_file},
+    path::Path,
+    sync::mpsc::Sender,
+    time::Duration,
+};
 
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
+use chrono::{DateTime, Utc};
 use libmtp_rs::{
     device::{
         MtpDevice, StorageSort,
         raw::{RawDevice, detect_raw_devices},
     },
-    storage::Storage,
+    object::filetypes::Filetype,
+    storage::{Parent, Storage, files::FileMetadata},
+    util::CallbackReturn,
 };
 use slint::SharedString;
+
+use crate::shared::{create_filler_file, create_filler_file2};
+
+mod shared;
+
+pub enum BackendCommand {
+    Refresh,
+    Write {
+        space_to_leave: ByteSize,
+        selected_index: usize,
+        keep_local: bool,
+    },
+}
+
+pub enum BackendWrite {
+    InProgress(u64, u64),
+    Completed(Result<()>),
+}
+
+pub enum BackendEvent {
+    RefreshFinished(anyhow::Result<Vec<slint::SharedString>>),
+    Write(BackendWrite),
+}
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DeviceInfo {
@@ -218,14 +251,75 @@ impl AppState {
             })
             .collect::<Vec<_>>()
     }
+    fn write_to_storage(
+        &self,
+        storage_info: &SelectOption,
+        filler_file_path: impl AsRef<Path>,
+        metadata: FileMetadata,
+        evt_tx: Sender<BackendEvent>,
+    ) -> Result<()> {
+        let device_state = self
+            .devices
+            .get(&storage_info.device)
+            .context("No device found")?;
+        let pool = device_state.handle.storage_pool();
+        let storage = pool
+            .by_id(storage_info.storage.id)
+            .context("No storage found")?;
+
+        storage.send_file_from_path_with_callback(
+            &filler_file_path,
+            Parent::Root,
+            metadata,
+            |sent, total| {
+                let _ = evt_tx.send(BackendEvent::Write(BackendWrite::InProgress(sent, total)));
+                CallbackReturn::Continue
+            },
+        )?;
+
+        Ok(())
+    }
+    pub fn calculate_filler_size(
+        &self,
+        selected_option: &SelectOption,
+        desired_free_space: ByteSize,
+    ) -> ByteSize {
+        let filler_file_size = selected_option.storage.free_space - desired_free_space;
+        filler_file_size
+    }
     pub fn write_mtp_file(
         &self,
         space_to_leave: ByteSize,
         selected_device: &SelectOption,
         keep_local: bool,
+        evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
-        // simulate write
-        std::thread::sleep(Duration::from_secs(5));
+        let filler_file_path =
+            create_filler_file2(self.calculate_filler_size(selected_device, space_to_leave))?;
+        let filler_file_path = filler_file_path.canonicalize()?;
+        let meta = get_metadata(&filler_file_path)?;
+
+        self.write_to_storage(selected_device, &filler_file_path, meta, evt_tx)?;
+
+        if !keep_local {
+            remove_file(filler_file_path)?;
+        }
         Ok(())
     }
+}
+
+fn get_metadata(path: &Path) -> Result<FileMetadata<'_>> {
+    let meta = metadata(path)?;
+    let modification_date: DateTime<Utc> = meta.modified()?.into();
+    let file_name = path
+        .file_name()
+        .context("Path terminates in ..")?
+        .to_str()
+        .context("File name is not valid unicode")?;
+    Ok(FileMetadata {
+        file_name,
+        file_size: meta.len(),
+        file_type: Filetype::Unknown,
+        modification_date,
+    })
 }

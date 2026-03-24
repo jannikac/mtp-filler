@@ -23,6 +23,32 @@ pub fn make_progres_bar(size: u64, message: impl Into<Cow<'static, str>>) -> Res
     Ok(bar)
 }
 
+pub fn create_filler_file2(filler_size: ByteSize) -> Result<PathBuf> {
+    const BUFFER_SIZE: usize = 1024;
+    let filler_file_size: usize = filler_size.as_u64().try_into()?;
+
+    // put random uuid in file name to avoid overwriting an existing file with the same name
+    let uuid = Uuid::new_v4();
+
+    let filler_path = PathBuf::from(format!("./{}_filler.txt", uuid.to_string()));
+    let f = File::create(&filler_path)?;
+
+    let mut writer = BufWriter::new(f);
+
+    let mut buffer = [0; BUFFER_SIZE];
+    let mut remaining_size = filler_file_size;
+
+    while remaining_size > 0 {
+        let to_write = cmp::min(remaining_size, buffer.len());
+        let buffer = &mut buffer[..to_write];
+        fastrand::fill(buffer);
+        writer.write_all(buffer)?;
+
+        remaining_size -= to_write;
+    }
+    Ok(filler_path)
+}
+
 pub fn create_filler_file(current_free_bytes: ByteSize) -> Result<PathBuf> {
     const BUFFER_SIZE: usize = 1024;
     let input_size = Input::new()
