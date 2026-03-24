@@ -58,11 +58,11 @@ export component MainWindow inherits Window {
             }
         }
 
-        property <string> space_to_leave: "";
+        property <string> space_to_leave: "10MiB";
 
         VerticalLayout {
             Text {
-                text: "Space to leave";
+                text: "Space to leave on device";
             }
 
             input := LineEdit {
