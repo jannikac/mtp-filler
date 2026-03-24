@@ -19,11 +19,6 @@ fn main() -> Result<()> {
     let app_state = Rc::new(RefCell::new(AppState::new()));
     let main_window = MainWindow::new()?;
     let main_window_weak = main_window.as_weak();
-    let my_vec = vec![
-        slint::SharedString::from("one"),
-        slint::SharedString::from("two"),
-        slint::SharedString::from("three"),
-    ];
 
     let handle2 = main_window_weak.clone();
     let app_state_for_write = app_state.clone();
@@ -61,7 +56,6 @@ fn main() -> Result<()> {
         dbg!(space_to_leave, selected_index, keep_local);
     });
 
-    main_window.set_combo_options(slint::ModelRc::new(slint::VecModel::from(my_vec)));
     let app_state_for_refresh = app_state.clone();
     main_window.on_refresh_clicked(move || {
         let mut app_state = app_state_for_refresh.borrow_mut();
