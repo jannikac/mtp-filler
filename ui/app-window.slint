@@ -7,7 +7,7 @@ import {
     HorizontalBox,
 } from "std-widgets.slint";
 export component MainWindow inherits Window {
-    width: 400px;
+    width: 600px;
     height: 300px;
 
     in property <[string]> combo_options: [];
@@ -26,7 +26,6 @@ export component MainWindow inherits Window {
 
         HorizontalLayout {
             device_combo := ComboBox {
-                width: 300px;
                 model: root.combo_options;
                 current-index: -1;
             }
