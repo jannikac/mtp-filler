@@ -141,7 +141,6 @@ fn main() -> Result<()> {
                             }
                             Err(e) => {
                                 cmd_tx.send(BackendCommand::Refresh);
-                                window.set_is_busy(false);
                                 window.set_progress_message("".into());
                                 window.set_sent_bytes(0);
                                 window.set_total_bytes(0);
