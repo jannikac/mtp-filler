@@ -88,7 +88,7 @@ fn main() -> Result<()> {
             slint::invoke_from_event_loop(move || {
                 let window = weak.upgrade().unwrap();
                 match evt {
-                    BackendEvent::RefreshFinished(shared_strings) => match shared_strings {
+                    BackendEvent::RefreshFinished(refresh_result) => match refresh_result {
                         Ok(options) => {
                             window.set_select_device_error(slint::SharedString::from(""));
                             window.set_combo_options(slint::ModelRc::new(slint::VecModel::from(
@@ -106,8 +106,15 @@ fn main() -> Result<()> {
                             window.set_total_bytes(total.try_into().unwrap());
                             window.set_progress_message(message.into());
                         }
-                        BackendWrite::Completed(_) => {
-                            window.set_progress_message("Finished".into());
+                        BackendWrite::Completed(result) => match result {
+                            Ok(()) => {
+                                window.set_space_to_leave_error("".into());
+                                window.set_progress_message("Finished".into());
+                            }
+                            Err(e) => {
+                                window.set_progress_message("".into());
+                                window.set_space_to_leave_error(e.to_string().into());
+                            }
                         }
                     },
                 }

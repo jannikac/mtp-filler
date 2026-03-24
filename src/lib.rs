@@ -25,6 +25,8 @@ use crate::shared::{create_filler_file, create_filler_file2};
 
 mod shared;
 
+const MIN_DESIRED_FREE_SPACE_BYTES: u64 = 1024;
+
 pub enum BackendCommand {
     Refresh,
     Write {
@@ -291,6 +293,25 @@ impl AppState {
         let filler_file_size = selected_option.storage.free_space - desired_free_space;
         filler_file_size
     }
+    pub fn validate_desired_free_space(
+        &self,
+        selected_option: &SelectOption,
+        desired_free_space: ByteSize,
+    ) -> Result<()> {
+        let current_free_bytes = selected_option.storage.free_space;
+
+        if desired_free_space >= current_free_bytes {
+            Err(anyhow!(
+                "Desired free bytes cannot be larger than or equal to the current free space on device"
+            ))
+        } else if desired_free_space < ByteSize::b(MIN_DESIRED_FREE_SPACE_BYTES) {
+            Err(anyhow!(
+                "Desired free bytes must be larger than 1024 bytes (1 KiB)"
+            ))
+        } else {
+            Ok(())
+        }
+    }
     pub fn write_mtp_file(
         &self,
         space_to_leave: ByteSize,
@@ -298,6 +319,8 @@ impl AppState {
         keep_local: bool,
         evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
+        self.validate_desired_free_space(selected_device, space_to_leave)?;
+
         let filler_file_path = create_filler_file2(
             self.calculate_filler_size(selected_device, space_to_leave),
             evt_tx.clone(),
