@@ -8,15 +8,27 @@ in
 pkgs.callPackage (
   {
     mkShell,
+    lib,
     cargo,
     rustc,
     rust-analyzer,
     rustfmt,
     pkg-config,
+    fontconfig,
+    wayland,
+    libxkbcommon,
+    libGL,
     libmtp,
   }:
   mkShell {
     strictDeps = true;
+    LD_LIBRARY_PATH = lib.makeLibraryPath [
+      fontconfig
+      wayland
+      libxkbcommon
+      libGL
+      libmtp
+    ];
     nativeBuildInputs = [
       cargo
       rustc
@@ -25,6 +37,10 @@ pkgs.callPackage (
       pkg-config
     ];
     buildInputs = [
+      fontconfig
+      wayland
+      libxkbcommon
+      libGL
       libmtp
     ];
   }
