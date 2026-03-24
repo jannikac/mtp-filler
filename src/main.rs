@@ -28,7 +28,7 @@ fn main() -> Result<()> {
         match refresh_result {
             Ok(_) => {
                 let options = app_state
-                    .get_select_options()
+                    .select_options
                     .iter()
                     .map(|v| v.to_shared_string())
                     .collect::<Vec<_>>();

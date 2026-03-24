@@ -162,12 +162,14 @@ impl DeviceState {
 
 pub struct AppState {
     pub devices: HashMap<DeviceInfo, DeviceState>,
+    pub select_options: Vec<SelectOption>,
 }
 
 impl AppState {
     pub fn new() -> Self {
         Self {
             devices: HashMap::new(),
+            select_options: vec![],
         }
     }
     fn reuse_or_open(
@@ -186,7 +188,7 @@ impl AppState {
         }?;
         Ok(device_tuple)
     }
-    pub fn refresh(&mut self) -> Result<()> {
+    fn refresh_devices(&mut self) -> Result<()> {
         let mut old_devices = std::mem::take(&mut self.devices);
 
         let devices = detect_raw_devices()?
@@ -196,7 +198,16 @@ impl AppState {
         self.devices = devices;
         Ok(())
     }
-    pub fn get_select_options(&self) -> Vec<SelectOption> {
+    fn refresh_select_options(&mut self) {
+        let select_options = self.get_select_options();
+        self.select_options = select_options;
+    }
+    pub fn refresh(&mut self) -> Result<()> {
+        self.refresh_devices()?;
+        self.refresh_select_options();
+        Ok(())
+    }
+    fn get_select_options(&self) -> Vec<SelectOption> {
         self.devices
             .iter()
             .flat_map(|(device_info, device)| {
