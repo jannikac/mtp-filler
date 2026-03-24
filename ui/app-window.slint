@@ -3,6 +3,7 @@ import {
     ComboBox,
     LineEdit,
     CheckBox,
+    Palette,
     VerticalBox,
     HorizontalBox,
     ProgressIndicator,
@@ -10,11 +11,15 @@ import {
 export component MainWindow inherits Window {
     width: 600px;
     height: 300px;
+    background: Palette.background;
 
     in property <[string]> combo_options: [];
     in property <string> select_device_error: "";
     in property <string> space_to_leave_error: "";
 
+    in-out property <bool> show_error_dialog: false;
+    in-out property <string> error_message: "";
+    property <bool> ui_enabled: !show_error_dialog;
     in property <int> total_bytes: 0;
     in property <int> sent_bytes: 0;
     in property <string> progress_message: "";
@@ -34,11 +39,13 @@ export component MainWindow inherits Window {
                 spacing: 8px;
                 device_combo := ComboBox {
                     model: root.combo_options;
+                    enabled: root.ui_enabled;
                 }
 
                 Button {
                     text: "🔄 Refresh";
                     accessible-label: "Refresh";
+                    enabled: root.ui_enabled;
                     clicked => {
                         root.refresh_clicked();
                     }
@@ -59,6 +66,7 @@ export component MainWindow inherits Window {
 
             input := LineEdit {
                 text <=> space_to_leave;
+                enabled: root.ui_enabled;
             }
 
             if root.space_to_leave_error != "": Text {
@@ -68,10 +76,12 @@ export component MainWindow inherits Window {
 
         keep_local_checkbox := CheckBox {
             text: "Keep local filler file after write";
+            enabled: root.ui_enabled;
         }
 
         Button {
             text: "Write to device";
+            enabled: root.ui_enabled;
             clicked => {
                 root.write_clicked(space_to_leave, device_combo.current-index, keep_local_checkbox.checked)
             }
@@ -85,6 +95,47 @@ export component MainWindow inherits Window {
 
             ProgressIndicator {
                 progress: root.progress;
+            }
+        }
+    }
+
+    if root.show_error_dialog: Rectangle {
+        background: #00000066;
+        width: parent.width;
+        height: parent.height;
+
+        Rectangle {
+            width: 380px;
+            height: 180px;
+            background: Palette.background;
+
+            VerticalBox {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                spacing: 12px;
+
+                Text {
+                    text: "Error occurred";
+                }
+
+                Text {
+                    wrap: word-wrap;
+                    text: root.error_message;
+                }
+
+                HorizontalBox {
+                    alignment: end;
+
+                    ok_button := Button {
+                        text: "OK";
+                        clicked => {
+                            root.show_error_dialog = false;
+                            root.error_message = "";
+                        }
+                    }
+                }
             }
         }
     }

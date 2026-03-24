@@ -109,11 +109,14 @@ fn main() -> Result<()> {
                         BackendWrite::Completed(result) => match result {
                             Ok(()) => {
                                 window.set_space_to_leave_error("".into());
+                                window.set_show_error_dialog(false);
+                                window.set_error_message("".into());
                                 window.set_progress_message("Finished".into());
                             }
                             Err(e) => {
                                 window.set_progress_message("".into());
-                                window.set_space_to_leave_error(e.to_string().into());
+                                window.set_show_error_dialog(true);
+                                window.set_error_message(e.to_string().into());
                             }
                         }
                     },
@@ -131,6 +134,8 @@ fn main() -> Result<()> {
             let handle2 = weak.upgrade().unwrap();
 
             handle2.set_space_to_leave_error("".into());
+            handle2.set_show_error_dialog(false);
+            handle2.set_error_message("".into());
 
             let space_to_leave = match ByteSize::from_str(&space_to_leave) {
                 Ok(v) => v,
