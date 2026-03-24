@@ -101,12 +101,13 @@ fn main() -> Result<()> {
                         }
                     },
                     BackendEvent::Write(event) => match event {
-                        BackendWrite::InProgress(sent, total) => {
+                        BackendWrite::InProgress(sent, total, message) => {
                             window.set_sent_bytes(sent.try_into().unwrap());
                             window.set_total_bytes(total.try_into().unwrap());
+                            window.set_progress_message(message.into());
                         }
                         BackendWrite::Completed(_) => {
-                            window.set_select_device_error(slint::SharedString::from("done"))
+                            window.set_progress_message("Finished".into());
                         }
                     },
                 }

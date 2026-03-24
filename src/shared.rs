@@ -5,6 +5,7 @@ use std::{
     io::{BufWriter, Write},
     path::{Path, PathBuf},
     str::FromStr,
+    sync::mpsc::Sender,
 };
 
 use anyhow::{Result, anyhow};
@@ -12,6 +13,8 @@ use bytesize::ByteSize;
 use dialoguer::{Confirm, Input};
 use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
+
+use crate::BackendEvent;
 
 pub fn make_progres_bar(size: u64, message: impl Into<Cow<'static, str>>) -> Result<ProgressBar> {
     let bar = ProgressBar::new(size).with_message(message).with_style(
@@ -23,7 +26,7 @@ pub fn make_progres_bar(size: u64, message: impl Into<Cow<'static, str>>) -> Res
     Ok(bar)
 }
 
-pub fn create_filler_file2(filler_size: ByteSize) -> Result<PathBuf> {
+pub fn create_filler_file2(filler_size: ByteSize, evt_tx: Sender<BackendEvent>) -> Result<PathBuf> {
     const BUFFER_SIZE: usize = 1024;
     let filler_file_size: usize = filler_size.as_u64().try_into()?;
 
@@ -45,6 +48,11 @@ pub fn create_filler_file2(filler_size: ByteSize) -> Result<PathBuf> {
         writer.write_all(buffer)?;
 
         remaining_size -= to_write;
+        let _ = evt_tx.send(BackendEvent::Write(crate::BackendWrite::InProgress(
+            (filler_file_size - remaining_size).try_into().unwrap(),
+            filler_file_size.try_into().unwrap(),
+            "Creating filler file (1/2)",
+        )));
     }
     Ok(filler_path)
 }

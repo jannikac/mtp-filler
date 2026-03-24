@@ -14,8 +14,10 @@ export component MainWindow inherits Window {
     in property <[string]> combo_options: [];
     in property <string> select_device_error: "";
     in property <string> space_to_leave_error: "";
+
     in property <int> total_bytes: 0;
     in property <int> sent_bytes: 0;
+    in property <string> progress_message: "";
     property <float> progress: total_bytes > 0 ? sent_bytes * 1.0 / total_bytes : 0.0;
 
     callback refresh_clicked();
@@ -77,17 +79,12 @@ export component MainWindow inherits Window {
 
         VerticalLayout {
             Text {
-                text: "Sending to device";
+                visible: root.progress_message != "";
+                text: root.progress_message;
             }
 
-            HorizontalLayout {
-                ProgressIndicator {
-                    progress: root.progress;
-                }
-
-                Text {
-                    text: root.sent_bytes + "/" + root.total_bytes;
-                }
+            ProgressIndicator {
+                progress: root.progress;
             }
         }
     }

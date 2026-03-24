@@ -35,7 +35,7 @@ pub enum BackendCommand {
 }
 
 pub enum BackendWrite {
-    InProgress(u64, u64),
+    InProgress(u64, u64, &'static str),
     Completed(Result<()>),
 }
 
@@ -272,7 +272,11 @@ impl AppState {
             Parent::Root,
             metadata,
             |sent, total| {
-                let _ = evt_tx.send(BackendEvent::Write(BackendWrite::InProgress(sent, total)));
+                let _ = evt_tx.send(BackendEvent::Write(BackendWrite::InProgress(
+                    sent,
+                    total,
+                    "Sending to device (2/2)",
+                )));
                 CallbackReturn::Continue
             },
         )?;
@@ -294,8 +298,10 @@ impl AppState {
         keep_local: bool,
         evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
-        let filler_file_path =
-            create_filler_file2(self.calculate_filler_size(selected_device, space_to_leave))?;
+        let filler_file_path = create_filler_file2(
+            self.calculate_filler_size(selected_device, space_to_leave),
+            evt_tx.clone(),
+        )?;
         let filler_file_path = filler_file_path.canonicalize()?;
         let meta = get_metadata(&filler_file_path)?;
 
