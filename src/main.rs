@@ -102,23 +102,28 @@ fn main() -> Result<()> {
                     },
                     BackendEvent::Write(event) => match event {
                         BackendWrite::InProgress(sent, total, message) => {
+                            window.set_is_busy(true);
                             window.set_sent_bytes(sent.try_into().unwrap());
                             window.set_total_bytes(total.try_into().unwrap());
                             window.set_progress_message(message.into());
                         }
                         BackendWrite::Completed(result) => match result {
                             Ok(()) => {
+                                window.set_is_busy(false);
                                 window.set_space_to_leave_error("".into());
                                 window.set_show_error_dialog(false);
                                 window.set_error_message("".into());
                                 window.set_progress_message("Finished".into());
                             }
                             Err(e) => {
+                                window.set_is_busy(false);
                                 window.set_progress_message("".into());
+                                window.set_sent_bytes(0);
+                                window.set_total_bytes(0);
                                 window.set_show_error_dialog(true);
                                 window.set_error_message(e.to_string().into());
                             }
-                        }
+                        },
                     },
                 }
             })

@@ -19,7 +19,8 @@ export component MainWindow inherits Window {
 
     in-out property <bool> show_error_dialog: false;
     in-out property <string> error_message: "";
-    property <bool> ui_enabled: !show_error_dialog;
+    in property <bool> is_busy: false;
+    property <bool> ui_enabled: !show_error_dialog && !is_busy;
     in property <int> total_bytes: 0;
     in property <int> sent_bytes: 0;
     in property <string> progress_message: "";
