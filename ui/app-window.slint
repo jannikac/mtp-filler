@@ -31,9 +31,9 @@ export component MainWindow inherits Window {
             }
 
             HorizontalLayout {
+                spacing: 8px;
                 device_combo := ComboBox {
                     model: root.combo_options;
-                    current-index: -1;
                 }
 
                 Button {
