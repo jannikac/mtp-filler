@@ -17,10 +17,11 @@ export component MainWindow inherits Window {
     in property <string> select_device_error: "";
     in property <string> space_to_leave_error: "";
 
-    in-out property <bool> show_error_dialog: false;
-    in-out property <string> error_message: "";
+    in-out property <bool> show_status_dialog: false;
+    in-out property <string> dialog_title: "";
+    in-out property <string> dialog_message: "";
     in property <bool> is_busy: false;
-    property <bool> ui_enabled: !show_error_dialog && !is_busy;
+    property <bool> ui_enabled: !show_status_dialog && !is_busy;
     in property <int> total_bytes: 0;
     in property <int> sent_bytes: 0;
     in property <string> progress_message: "";
@@ -100,7 +101,7 @@ export component MainWindow inherits Window {
         }
     }
 
-    if root.show_error_dialog: Rectangle {
+    if root.show_status_dialog: Rectangle {
         background: #00000066;
         width: parent.width;
         height: parent.height;
@@ -118,12 +119,12 @@ export component MainWindow inherits Window {
                 spacing: 12px;
 
                 Text {
-                    text: "Error occurred";
+                    text: root.dialog_title;
                 }
 
                 Text {
                     wrap: word-wrap;
-                    text: root.error_message;
+                    text: root.dialog_message;
                 }
 
                 HorizontalBox {
@@ -132,8 +133,9 @@ export component MainWindow inherits Window {
                     ok_button := Button {
                         text: "OK";
                         clicked => {
-                            root.show_error_dialog = false;
-                            root.error_message = "";
+                            root.show_status_dialog = false;
+                            root.dialog_title = "";
+                            root.dialog_message = "";
                         }
                     }
                 }

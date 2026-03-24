@@ -41,6 +41,22 @@ fn handle_write(
     Ok(())
 }
 
+fn clear_status_dialog(window: &MainWindow) {
+    window.set_show_status_dialog(false);
+    window.set_dialog_title("".into());
+    window.set_dialog_message("".into());
+}
+
+fn show_status_dialog(
+    window: &MainWindow,
+    title: impl Into<SharedString>,
+    message: impl Into<SharedString>,
+) {
+    window.set_show_status_dialog(true);
+    window.set_dialog_title(title.into());
+    window.set_dialog_message(message.into());
+}
+
 fn main() -> Result<()> {
     let main_window = MainWindow::new()?;
     let main_window_weak_sync_thread = main_window.as_weak();
@@ -114,9 +130,14 @@ fn main() -> Result<()> {
                                 cmd_tx.send(BackendCommand::Refresh);
                                 window.set_is_busy(false);
                                 window.set_space_to_leave_error("".into());
-                                window.set_show_error_dialog(false);
-                                window.set_error_message("".into());
+                                window.set_sent_bytes(0);
+                                window.set_total_bytes(0);
                                 window.set_progress_message("Finished".into());
+                                show_status_dialog(
+                                    &window,
+                                    "Write completed",
+                                    "Write finished successfully",
+                                );
                             }
                             Err(e) => {
                                 cmd_tx.send(BackendCommand::Refresh);
@@ -124,8 +145,7 @@ fn main() -> Result<()> {
                                 window.set_progress_message("".into());
                                 window.set_sent_bytes(0);
                                 window.set_total_bytes(0);
-                                window.set_show_error_dialog(true);
-                                window.set_error_message(e.to_string().into());
+                                show_status_dialog(&window, "Error occurred", e.to_string());
                             }
                         },
                     },
@@ -143,8 +163,7 @@ fn main() -> Result<()> {
             let handle2 = weak.upgrade().unwrap();
 
             handle2.set_space_to_leave_error("".into());
-            handle2.set_show_error_dialog(false);
-            handle2.set_error_message("".into());
+            clear_status_dialog(&handle2);
 
             let space_to_leave = match ByteSize::from_str(&space_to_leave) {
                 Ok(v) => v,
