@@ -83,7 +83,10 @@ pub fn run_gui() -> Result<()> {
                     );
                     evt_tx.send(BackendEvent::Write(BackendWrite::Completed(res)));
                 }
-                BackendCommand::Exit => break,
+                BackendCommand::Exit => {
+                    println!("Exiting..");
+                    break;
+                }
             }
         }
     });
@@ -142,9 +145,9 @@ pub fn run_gui() -> Result<()> {
                         },
                     },
                 }
-            })
-            .is_err();
-            if res {
+            });
+            if let Err(e) = res {
+                println!("{}", e);
                 break;
             }
         }
