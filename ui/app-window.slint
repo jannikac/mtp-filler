@@ -5,6 +5,7 @@ import {
     CheckBox,
     VerticalBox,
     HorizontalBox,
+    ProgressIndicator,
 } from "std-widgets.slint";
 export component MainWindow inherits Window {
     width: 600px;
@@ -13,6 +14,9 @@ export component MainWindow inherits Window {
     in property <[string]> combo_options: [];
     in property <string> select_device_error: "";
     in property <string> space_to_leave_error: "";
+    in property <int> total_bytes: 0;
+    in property <int> sent_bytes: 0;
+    property <float> progress: total_bytes > 0 ? sent_bytes * 1.0 / total_bytes : 0.0;
 
     callback refresh_clicked();
     callback write_clicked(string, int, bool);
@@ -20,43 +24,45 @@ export component MainWindow inherits Window {
     VerticalBox {
         spacing: 16px;
         VerticalLayout {
-        Text {
-            text: "Select device to use";
-        }
-
-        HorizontalLayout {
-            device_combo := ComboBox {
-                model: root.combo_options;
-                current-index: -1;
+            Text {
+                text: "Select device to use";
             }
 
-            Button {
-                text: "🔄 Refresh";
-                accessible-label: "Refresh";
-                clicked => {
-                    root.refresh_clicked();
+            HorizontalLayout {
+                device_combo := ComboBox {
+                    model: root.combo_options;
+                    current-index: -1;
+                }
+
+                Button {
+                    text: "🔄 Refresh";
+                    accessible-label: "Refresh";
+                    clicked => {
+                        root.refresh_clicked();
+                    }
                 }
             }
-        }
 
-        if root.select_device_error != "" : Text {
-            text: root.select_device_error;
-        }}
+            if root.select_device_error != "": Text {
+                text: root.select_device_error;
+            }
+        }
 
         property <string> space_to_leave: "";
 
         VerticalLayout {
-        Text {
-            text: "Space to leave";
-        }
+            Text {
+                text: "Space to leave";
+            }
 
-        input := LineEdit {
-            text <=> space_to_leave;
+            input := LineEdit {
+                text <=> space_to_leave;
+            }
+
+            if root.space_to_leave_error != "": Text {
+                text: space_to_leave_error;
+            }
         }
-        if root.space_to_leave_error != "" : Text {
-            text: space_to_leave_error;
-        }
-    }
 
         keep_local_checkbox := CheckBox {
             text: "Keep local filler file after write";
@@ -66,6 +72,22 @@ export component MainWindow inherits Window {
             text: "Write to device";
             clicked => {
                 root.write_clicked(space_to_leave, device_combo.current-index, keep_local_checkbox.checked)
+            }
+        }
+
+        VerticalLayout {
+            Text {
+                text: "Sending to device";
+            }
+
+            HorizontalLayout {
+                ProgressIndicator {
+                    progress: root.progress;
+                }
+
+                Text {
+                    text: root.sent_bytes + "/" + root.total_bytes;
+                }
             }
         }
     }
