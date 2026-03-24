@@ -13,6 +13,7 @@ pkgs.callPackage (
     rustc,
     rust-analyzer,
     rustfmt,
+    slint-lsp,
     pkg-config,
     fontconfig,
     wayland,
@@ -34,6 +35,7 @@ pkgs.callPackage (
       rustc
       rust-analyzer
       rustfmt
+      slint-lsp
       pkg-config
     ];
     buildInputs = [
