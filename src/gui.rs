@@ -11,9 +11,9 @@ use slint::SharedString;
 fn handle_refresh(app_state: &mut AppState) -> Result<Vec<SharedString>> {
     app_state.refresh()?;
     let result = app_state
-        .select_options
+        .get_select_options()
         .iter()
-        .map(|v| v.to_shared_string())
+        .map(|v| v.label.clone())
         .collect::<Vec<_>>();
     Ok(result)
 }
@@ -25,11 +25,7 @@ fn handle_write(
     keep_local: bool,
     evt_tx: Sender<BackendEvent>,
 ) -> Result<()> {
-    let selected_option = app_state
-        .select_options
-        .get(selected_index)
-        .ok_or_else(|| anyhow!("Invalid device selection"))?;
-    app_state.write_mtp_file(space_to_leave, selected_option, keep_local, evt_tx)?;
+    app_state.write_mtp_file(space_to_leave, selected_index, keep_local, evt_tx)?;
     Ok(())
 }
 
@@ -61,7 +57,7 @@ pub fn run_gui() -> Result<()> {
     // owns the device handles and handles long-running tasks
     // handles are not send which is why they will remain in worker thread
     let worker_thread = std::thread::spawn(move || {
-        let mut app_state = AppState::new();
+        let mut app_state = AppState::new().expect("Failed to construct app state");
 
         while let Ok(cmd) = cmd_rx.recv() {
             match cmd {
