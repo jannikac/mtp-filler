@@ -97,6 +97,10 @@ export component MainWindow inherits Window {
 
             ProgressIndicator {
                 progress: root.progress;
+                animate progress {
+                    duration: 120ms;
+                    easing: linear;
+                }
             }
         }
     }

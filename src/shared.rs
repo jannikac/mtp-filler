@@ -122,7 +122,7 @@ pub fn delete_fillter_file(path: impl AsRef<Path>) -> Result<()> {
     Ok(())
 }
 
-const PROGRESS_UPDATE_INTERVAL: Duration = Duration::from_millis(50);
+const PROGRESS_UPDATE_INTERVAL: Duration = Duration::from_millis(100);
 
 pub struct ThrottledProgressReporter {
     evt_tx: Sender<BackendEvent>,
