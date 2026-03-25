@@ -5,7 +5,10 @@ use bytesize::ByteSize;
 use dialoguer::{Confirm, Input, Select};
 use mtp_filler::{AppState, BackendEvent};
 
-use crate::{BackendWrite, shared::{PROGRESS_UPDATE_INTERVAL_CLI, make_progres_bar}};
+use crate::{
+    BackendWrite,
+    shared::{PROGRESS_UPDATE_INTERVAL_CLI, make_progres_bar},
+};
 
 fn prompt_device(app_state: &AppState) -> Result<usize> {
     if app_state.select_options.is_empty() {
@@ -60,10 +63,6 @@ pub fn run_cli() -> Result<()> {
     app_state.refresh()?;
 
     let selected_index = prompt_device(&app_state)?;
-    let selected_option = app_state
-        .select_options
-        .get(selected_index)
-        .ok_or_else(|| anyhow!("Invalid device selection"))?;
     let desired_free_space = prompt_desired_free_space(&app_state, selected_index)?;
     let keep_local = prompt_keep_local()?;
 
@@ -83,7 +82,13 @@ pub fn run_cli() -> Result<()> {
         Ok(())
     });
 
-    app_state.write_mtp_file(desired_free_space, selected_index, keep_local, evt_tx, PROGRESS_UPDATE_INTERVAL_CLI)?;
+    app_state.write_mtp_file(
+        desired_free_space,
+        selected_index,
+        keep_local,
+        evt_tx,
+        PROGRESS_UPDATE_INTERVAL_CLI,
+    )?;
 
     progress_thread
         .join()

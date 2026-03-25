@@ -21,7 +21,7 @@ use winmtp::{
 
 use crate::{
     BackendEvent,
-    shared::{PROGRESS_UPDATE_INTERVAL_GUI, ThrottledProgressReporter, create_filler_file_with_progress},
+    shared::{ThrottledProgressReporter, create_filler_file_with_progress},
 };
 
 const MIN_DESIRED_FREE_SPACE_BYTES: u64 = 1024;

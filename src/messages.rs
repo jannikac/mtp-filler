@@ -21,8 +21,3 @@ pub enum BackendEvent {
     RefreshFinished(anyhow::Result<Vec<slint::SharedString>>),
     Write(BackendWrite),
 }
-
-#[derive(Clone)]
-pub struct SelectOption {
-    pub label: SharedString,
-}
