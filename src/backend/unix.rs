@@ -20,10 +20,7 @@ use libmtp_rs::{
 };
 use slint::SharedString;
 
-use crate::{
-    BackendEvent, BackendWrite,
-    shared::{create_filler_file, create_filler_file2},
-};
+use crate::{BackendEvent, BackendWrite, shared::create_filler_file_with_progress};
 
 const MIN_DESIRED_FREE_SPACE_BYTES: u64 = 1024;
 
@@ -314,13 +311,15 @@ impl AppState {
         selected_index: usize,
         keep_local: bool,
         evt_tx: Sender<BackendEvent>,
+        update_interval: Duration,
     ) -> Result<()> {
         let selected_device = self.select_options.get(selected_index).context("context")?;
         self.validate_desired_free_space(selected_device, space_to_leave)?;
 
-        let filler_file_path = create_filler_file2(
+        let filler_file_path = create_filler_file_with_progress(
             self.calculate_filler_size(selected_device, space_to_leave),
-            evt_tx.clone(),
+            &evt_tx,
+            update_interval,
         )?;
         let filler_file_path = filler_file_path.canonicalize()?;
         let meta = get_metadata(&filler_file_path)?;
