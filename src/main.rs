@@ -1,7 +1,7 @@
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
-// mod cli;
+mod cli;
 mod gui;
 mod shared;
 
@@ -24,7 +24,7 @@ fn main() -> Result<()> {
     let args = Args::parse();
 
     match args.command {
-        Some(Command::Cli) => todo!(),
+        Some(Command::Cli) => cli::run_cli(),
         None => gui::run_gui(),
     }
 }

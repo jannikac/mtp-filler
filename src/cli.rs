@@ -56,7 +56,7 @@ fn prompt_keep_local() -> Result<bool> {
 }
 
 pub fn run_cli() -> Result<()> {
-    let mut app_state = AppState::new();
+    let mut app_state = AppState::new()?;
     app_state.refresh()?;
 
     let selected_index = prompt_device(&app_state)?;
@@ -83,7 +83,7 @@ pub fn run_cli() -> Result<()> {
         Ok(())
     });
 
-    app_state.write_mtp_file(desired_free_space, selected_option, keep_local, evt_tx)?;
+    app_state.write_mtp_file(desired_free_space, selected_index, keep_local, evt_tx)?;
 
     progress_thread
         .join()
