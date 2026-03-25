@@ -4,7 +4,6 @@ use std::{
     fs::{metadata, remove_file},
     path::Path,
     sync::mpsc::Sender,
-    time::Duration,
 };
 
 use anyhow::{Context, Result, anyhow};
@@ -208,6 +207,7 @@ impl AppState {
             select_options: vec![],
         }
     }
+
     fn reuse_or_open(
         &self,
         old_devices: &mut HashMap<DeviceInfo, DeviceState>,
@@ -224,6 +224,7 @@ impl AppState {
         }?;
         Ok(device_tuple)
     }
+
     fn refresh_devices(&mut self) -> Result<()> {
         let mut old_devices = std::mem::take(&mut self.devices);
 
@@ -234,15 +235,18 @@ impl AppState {
         self.devices = devices;
         Ok(())
     }
+
     fn refresh_select_options(&mut self) {
         let select_options = self.get_select_options();
         self.select_options = select_options;
     }
+
     pub fn refresh(&mut self) -> Result<()> {
         self.refresh_devices()?;
         self.refresh_select_options();
         Ok(())
     }
+
     fn get_select_options(&self) -> Vec<SelectOption> {
         self.devices
             .iter()
@@ -254,6 +258,7 @@ impl AppState {
             })
             .collect::<Vec<_>>()
     }
+
     fn write_to_storage(
         &self,
         storage_info: &SelectOption,
@@ -286,6 +291,7 @@ impl AppState {
 
         Ok(())
     }
+
     pub fn calculate_filler_size(
         &self,
         selected_option: &SelectOption,
@@ -294,6 +300,7 @@ impl AppState {
         let filler_file_size = selected_option.storage.free_space - desired_free_space;
         filler_file_size
     }
+
     pub fn validate_desired_free_space(
         &self,
         selected_option: &SelectOption,
@@ -313,6 +320,7 @@ impl AppState {
             Ok(())
         }
     }
+
     pub fn write_mtp_file(
         &self,
         space_to_leave: ByteSize,
