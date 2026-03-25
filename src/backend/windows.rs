@@ -47,6 +47,9 @@ impl SelectOption {
         let s = format!("{}\n{}", self.device, self.storage);
         SharedString::from(s)
     }
+    pub fn to_string(&self) -> String {
+        format!("{} - {}", self.device, self.storage)
+    }
 }
 
 fn get_bytes_from_property(

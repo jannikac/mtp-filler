@@ -18,7 +18,7 @@ fn prompt_device(app_state: &AppState) -> Result<usize> {
     let items = app_state
         .select_options
         .iter()
-        .map(|option| option.to_shared_string().to_string())
+        .map(|option| option.to_string())
         .collect::<Vec<_>>();
 
     let selected_index = Select::new()
