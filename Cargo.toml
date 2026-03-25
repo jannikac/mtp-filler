@@ -14,9 +14,18 @@ dialoguer = "0.12.0"
 fastrand = "2.3.0"
 indicatif = "0.18.0"
 uuid = { version = "1.18.1", features = ["v4"] }
+slint = "1.14.1"
+clap = { version = "4.6.0", features = ["derive"] }
+
+[build-dependencies]
+slint-build = "1.14.1"
+
+[profile.release]
+codegen-units = 1
+lto = true
 
 [target.'cfg(windows)'.dependencies]
-winmtp = { git = "https://github.com/jannikac/winmtp.git", branch = "add-write-streams" }
+winmtp = { version = "0.3.2" }
 widestring = "1.2.1"
 dunce = "1.0.5"
 windows = { version = "0.52", features = [

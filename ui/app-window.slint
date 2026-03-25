@@ -1,0 +1,150 @@
+import {
+    Button,
+    ComboBox,
+    LineEdit,
+    CheckBox,
+    Palette,
+    VerticalBox,
+    HorizontalBox,
+    ProgressIndicator,
+} from "std-widgets.slint";
+export component MainWindow inherits Window {
+    title: "mtp-filler";
+    width: 600px;
+    height: 300px;
+    background: Palette.background;
+
+    in property <[string]> combo_options: [];
+    in property <string> select_device_error: "";
+    in property <string> space_to_leave_error: "";
+
+    in-out property <bool> show_status_dialog: false;
+    in-out property <string> dialog_title: "";
+    in-out property <string> dialog_message: "";
+    in property <bool> is_busy: false;
+    property <bool> ui_enabled: !show_status_dialog && !is_busy;
+    in property <float> total_mib: 0;
+    in property <float> sent_mib: 0;
+    in property <string> progress_message: "";
+    property <float> progress: total_mib > 0 ? sent_mib * 1.0 / total_mib : 0.0;
+
+    callback refresh_clicked();
+    callback write_clicked(string, int, bool);
+
+    VerticalBox {
+        spacing: 16px;
+        VerticalLayout {
+            Text {
+                text: "Select device to use";
+            }
+
+            HorizontalLayout {
+                spacing: 8px;
+                device_combo := ComboBox {
+                    model: root.combo_options;
+                    enabled: root.ui_enabled;
+                }
+
+                Button {
+                    text: "🔄 Refresh";
+                    accessible-label: "Refresh";
+                    enabled: root.ui_enabled;
+                    clicked => {
+                        root.refresh_clicked();
+                    }
+                }
+            }
+
+            if root.select_device_error != "": Text {
+                text: root.select_device_error;
+            }
+        }
+
+        property <string> space_to_leave: "10MiB";
+
+        VerticalLayout {
+            Text {
+                text: "Space to leave on device";
+            }
+
+            input := LineEdit {
+                text <=> space_to_leave;
+                enabled: root.ui_enabled;
+            }
+
+            if root.space_to_leave_error != "": Text {
+                text: space_to_leave_error;
+            }
+        }
+
+        keep_local_checkbox := CheckBox {
+            text: "Keep local filler file after write";
+            enabled: root.ui_enabled;
+        }
+
+        Button {
+            text: "Write to device";
+            enabled: root.ui_enabled;
+            clicked => {
+                root.write_clicked(space_to_leave, device_combo.current-index, keep_local_checkbox.checked)
+            }
+        }
+
+        VerticalLayout {
+            Text {
+                visible: root.progress_message != "";
+                text: root.progress_message;
+            }
+
+            ProgressIndicator {
+                progress: root.progress;
+                animate progress {
+                    duration: 120ms;
+                    easing: linear;
+                }
+            }
+        }
+    }
+
+    if root.show_status_dialog: Rectangle {
+        background: #00000066;
+        width: parent.width;
+        height: parent.height;
+
+        Rectangle {
+            width: 380px;
+            height: 180px;
+            background: Palette.background;
+
+            VerticalBox {
+                padding-left: 16px;
+                padding-right: 16px;
+                padding-top: 20px;
+                padding-bottom: 20px;
+                spacing: 12px;
+
+                Text {
+                    text: root.dialog_title;
+                }
+
+                Text {
+                    wrap: word-wrap;
+                    text: root.dialog_message;
+                }
+
+                HorizontalBox {
+                    alignment: end;
+
+                    ok_button := Button {
+                        text: "OK";
+                        clicked => {
+                            root.show_status_dialog = false;
+                            root.dialog_title = "";
+                            root.dialog_message = "";
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
