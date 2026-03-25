@@ -27,11 +27,6 @@ lto = true
 [target.'cfg(windows)'.dependencies]
 winmtp = { version = "0.3.2" }
 widestring = "1.2.1"
-dunce = "1.0.5"
-windows = { version = "0.52", features = [
-  "Win32_System_Com",
-  "Win32_Devices_PortableDevices",
-] }
 
 [target.'cfg(unix)'.dependencies]
 libmtp-rs = "0.7.7"
