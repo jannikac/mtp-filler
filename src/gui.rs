@@ -202,6 +202,8 @@ pub fn run_gui() -> Result<()> {
         });
     }
 
+    cmd_tx.send(BackendCommand::Refresh);
+
     main_window.run().context("Failed to run gui")?;
 
     // exit cleanly
