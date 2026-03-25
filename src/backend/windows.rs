@@ -9,7 +9,6 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
-
 use slint::SharedString;
 use widestring::U16CString;
 use winmtp::{
@@ -21,8 +20,8 @@ use winmtp::{
 };
 
 use crate::{
-    BackendEvent, BackendWrite,
-    shared::{create_filler_file, create_filler_file2},
+    BackendEvent,
+    shared::{ThrottledProgressReporter, create_filler_file_with_progress},
 };
 
 const MIN_DESIRED_FREE_SPACE_BYTES: u64 = 1024;
@@ -237,16 +236,14 @@ impl AppState {
             .devices
             .get(&storage_info.device)
             .context("No device found")?;
+        let mut progress =
+            ThrottledProgressReporter::new(evt_tx.clone(), "Sending to device (2/2)");
         send_file_to_device_with_callback(
             &device_state.handle,
             storage_info.storage.id.clone(),
             filler_file_path,
             |sent, total| {
-                let _ = evt_tx.send(BackendEvent::Write(BackendWrite::InProgress(
-                    sent,
-                    total,
-                    "Sending to device (2/2)",
-                )));
+                progress.emit(sent, total);
                 Ok(())
             },
         )?;
@@ -295,9 +292,9 @@ impl AppState {
             .context("failed to select device")?;
         self.validate_desired_free_space(selected_device, space_to_leave)?;
 
-        let filler_file_path = create_filler_file2(
+        let filler_file_path = create_filler_file_with_progress(
             self.calculate_filler_size(selected_device, space_to_leave),
-            evt_tx.clone(),
+            &evt_tx,
         )?;
         let filler_file_path = filler_file_path.canonicalize()?;
 
