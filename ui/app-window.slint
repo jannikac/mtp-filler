@@ -22,10 +22,10 @@ export component MainWindow inherits Window {
     in-out property <string> dialog_message: "";
     in property <bool> is_busy: false;
     property <bool> ui_enabled: !show_status_dialog && !is_busy;
-    in property <int> total_bytes: 0;
-    in property <int> sent_bytes: 0;
+    in property <float> total_mib: 0;
+    in property <float> sent_mib: 0;
     in property <string> progress_message: "";
-    property <float> progress: total_bytes > 0 ? sent_bytes * 1.0 / total_bytes : 0.0;
+    property <float> progress: total_mib > 0 ? sent_mib * 1.0 / total_mib : 0.0;
 
     callback refresh_clicked();
     callback write_clicked(string, int, bool);

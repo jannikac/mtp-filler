@@ -117,8 +117,8 @@ pub fn run_gui() -> Result<()> {
                     BackendEvent::Write(event) => match event {
                         BackendWrite::InProgress(sent, total, message) => {
                             window.set_is_busy(true);
-                            window.set_sent_bytes(sent.try_into().unwrap());
-                            window.set_total_bytes(total.try_into().unwrap());
+                            window.set_sent_mib(ByteSize::b(sent).as_mib() as f32);
+                            window.set_total_mib(ByteSize::b(total).as_mib() as f32);
                             window.set_progress_message(message.into());
                         }
                         BackendWrite::Completed(result) => match result {
@@ -126,8 +126,8 @@ pub fn run_gui() -> Result<()> {
                                 cmd_tx.send(BackendCommand::Refresh);
                                 window.set_is_busy(false);
                                 window.set_space_to_leave_error("".into());
-                                window.set_sent_bytes(0);
-                                window.set_total_bytes(0);
+                                window.set_sent_mib(0.0);
+                                window.set_total_mib(0.0);
                                 window.set_progress_message("Finished".into());
                                 show_status_dialog(
                                     &window,
@@ -138,8 +138,8 @@ pub fn run_gui() -> Result<()> {
                             Err(e) => {
                                 cmd_tx.send(BackendCommand::Refresh);
                                 window.set_progress_message("".into());
-                                window.set_sent_bytes(0);
-                                window.set_total_bytes(0);
+                                window.set_sent_mib(0.0);
+                                window.set_total_mib(0.0);
                                 show_status_dialog(&window, "Error occurred", e.to_string());
                             }
                         },
