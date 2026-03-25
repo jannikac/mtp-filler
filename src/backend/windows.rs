@@ -212,7 +212,7 @@ impl AppState {
             .iter()
             .flat_map(|(_, device)| {
                 let device_info = &device.info;
-                device.storages.iter().map(|storage| SelectOption {
+                device.storages.iter().map(move |storage| SelectOption {
                     device: device_info.clone(),
                     storage: storage.clone(),
                     label: SharedString::from(format!("{}\n{}", device_info, storage)),
