@@ -1,5 +1,6 @@
 use std::{
     collections::HashMap,
+    fmt::Display,
     fs::{File, remove_file},
     io::{Read, Write},
     path::Path,
@@ -21,7 +22,6 @@ use winmtp::{
 
 use crate::{
     BackendEvent, BackendWrite,
-    messages::SelectOption,
     shared::{create_filler_file, create_filler_file2},
 };
 
@@ -33,6 +33,20 @@ pub struct StorageInfo {
     name: U16CString,
     free_space: ByteSize,
     capacity: ByteSize,
+}
+
+#[derive(Debug, Clone)]
+pub struct SelectOption {
+    device: DeviceKey,
+    storage: StorageInfo,
+    pub label: SharedString,
+}
+
+impl SelectOption {
+    pub fn to_shared_string(&self) -> SharedString {
+        let s = format!("{}\n{}", self.device, self.storage);
+        SharedString::from(s)
+    }
 }
 
 fn get_bytes_from_property(
@@ -60,13 +74,14 @@ fn get_free_space(device: &Device, storage_id: U16CString) -> Result<ByteSize> {
 }
 
 pub struct DeviceState {
+    info: DeviceKey,
     handle: Device,
     storages: Vec<StorageInfo>,
 }
 
 impl DeviceState {
     fn open(raw: BasicDevice, app_ident: AppIdentifiers) -> Result<(DeviceKey, Self)> {
-        let key = DeviceKey {
+        let info = DeviceKey {
             id: raw.device_id(),
         };
         let mut handle = raw
@@ -74,7 +89,14 @@ impl DeviceState {
             .context("Failed to open device")?;
         let storages = Self::load_storages(&mut handle)?;
 
-        Ok((key.clone(), Self { handle, storages }))
+        Ok((
+            info.clone(),
+            Self {
+                info,
+                handle,
+                storages,
+            },
+        ))
     }
 
     fn refresh_storages(&mut self) -> Result<()> {
@@ -104,33 +126,40 @@ impl DeviceState {
 }
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-struct DeviceKey {
+pub struct DeviceKey {
     id: String,
 }
 
-#[derive(Debug, Clone)]
-struct Selection {
-    device: DeviceKey,
-    storage_id: U16CString,
+impl Display for DeviceKey {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(f, "Device {}", self.id)
+    }
+}
+
+impl Display for StorageInfo {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        write!(
+            f,
+            "{} (capacity: {}, free space: {})",
+            self.name.to_string_lossy(),
+            self.capacity,
+            self.free_space
+        )
+    }
 }
 
 pub struct AppState {
     pub devices: HashMap<DeviceKey, DeviceState>,
-    pub entries: Vec<Entry>,
+    pub select_options: Vec<SelectOption>,
     app_ident: AppIdentifiers,
     provider: Provider,
-}
-
-pub struct Entry {
-    pub option: SelectOption,
-    pub selection: Selection,
 }
 
 impl AppState {
     pub fn new() -> Result<Self> {
         Ok(Self {
             devices: HashMap::new(),
-            entries: vec![],
+            select_options: vec![],
             app_ident: make_current_app_identifiers!(),
             provider: Provider::new()?,
         })
@@ -148,31 +177,14 @@ impl AppState {
         Ok(())
     }
 
-    fn rebuild_entries(&mut self) {
-        self.entries = self
-            .devices
-            .iter()
-            .flat_map(|(device_key, device)| {
-                device.storages.iter().map(|storage| Entry {
-                    option: SelectOption {
-                        label: SharedString::from(format!(
-                            "{} {}",
-                            device_key.id,
-                            storage.name.to_string_lossy()
-                        )),
-                    },
-                    selection: Selection {
-                        device: device_key.clone(),
-                        storage_id: storage.id.clone(),
-                    },
-                })
-            })
-            .collect();
+    fn refresh_select_options(&mut self) {
+        let select_options = self.get_select_options();
+        self.select_options = select_options;
     }
 
     pub fn refresh(&mut self) -> Result<()> {
         self.refresh_devices()?;
-        self.rebuild_entries();
+        self.refresh_select_options();
         Ok(())
     }
 
@@ -195,42 +207,33 @@ impl AppState {
         Ok(device_tuple)
     }
 
-    fn get_selections(&self) -> Vec<Selection> {
+    pub fn get_select_options(&self) -> Vec<SelectOption> {
         self.devices
             .iter()
-            .flat_map(|(device_key, device)| {
-                device.storages.iter().map(|storage| Selection {
-                    device: device_key.clone(),
-                    storage_id: storage.id.clone(),
+            .flat_map(|(_, device)| {
+                let device_info = &device.info;
+                device.storages.iter().map(|storage| SelectOption {
+                    device: device_info.clone(),
+                    storage: storage.clone(),
+                    label: SharedString::from(format!("{}\n{}", device_info, storage)),
                 })
             })
             .collect::<Vec<_>>()
     }
 
-    fn selection(&self, selected_index: usize) -> Result<&Selection> {
-        self.entries
-            .get(selected_index)
-            .map(|entry| &entry.selection)
-            .context("failed to select device")
-    }
-
-    pub fn get_select_options(&self) -> Vec<SelectOption> {
-        self.entries
-            .iter()
-            .map(|entry| entry.option.clone())
-            .collect()
-    }
-
     fn write_to_storage(
         &self,
-        selection: &Selection,
+        storage_info: &SelectOption,
         filler_file_path: impl AsRef<Path>,
         evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
-        let device_state = self.devices.get(&selection.device).context("asd")?;
+        let device_state = self
+            .devices
+            .get(&storage_info.device)
+            .context("No device found")?;
         send_file_to_device_with_callback(
             &device_state.handle,
-            selection.storage_id.clone(),
+            storage_info.storage.id.clone(),
             filler_file_path,
             |sent, total| {
                 let _ = evt_tx.send(BackendEvent::Write(BackendWrite::InProgress(
@@ -244,39 +247,21 @@ impl AppState {
         Ok(())
     }
 
-    fn calculate_filler_size(
+    pub fn calculate_filler_size(
         &self,
-        selection: &Selection,
+        selected_option: &SelectOption,
         desired_free_space: ByteSize,
-    ) -> Result<ByteSize> {
-        let dev = self
-            .devices
-            .get(&selection.device)
-            .context("failed to get device")?;
-        let storage = dev
-            .storages
-            .iter()
-            .find(|v| v.id == selection.storage_id)
-            .context("asd")?;
-        let filler_file_size = storage.free_space - desired_free_space;
-        Ok(filler_file_size)
+    ) -> ByteSize {
+        let filler_file_size = selected_option.storage.free_space - desired_free_space;
+        filler_file_size
     }
 
-    fn validate_desired_free_space(
+    pub fn validate_desired_free_space(
         &self,
-        selection: &Selection,
+        selected_option: &SelectOption,
         desired_free_space: ByteSize,
     ) -> Result<()> {
-        let dev = self
-            .devices
-            .get(&selection.device)
-            .context("failed to get device")?;
-        let storage = dev
-            .storages
-            .iter()
-            .find(|v| v.id == selection.storage_id)
-            .context("asd")?;
-        let current_free_bytes = storage.free_space;
+        let current_free_bytes = selected_option.storage.free_space;
 
         if desired_free_space >= current_free_bytes {
             Err(anyhow!(
@@ -298,16 +283,19 @@ impl AppState {
         keep_local: bool,
         evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
-        let selection = self.selection(selected_index)?;
-        self.validate_desired_free_space(selection, space_to_leave)?;
+        let selected_device = self
+            .select_options
+            .get(selected_index)
+            .context("failed to select device")?;
+        self.validate_desired_free_space(selected_device, space_to_leave)?;
 
         let filler_file_path = create_filler_file2(
-            self.calculate_filler_size(selection, space_to_leave)?,
+            self.calculate_filler_size(selected_device, space_to_leave),
             evt_tx.clone(),
         )?;
         let filler_file_path = filler_file_path.canonicalize()?;
 
-        self.write_to_storage(selection, &filler_file_path, evt_tx)?;
+        self.write_to_storage(selected_device, &filler_file_path, evt_tx)?;
 
         if !keep_local {
             remove_file(filler_file_path)?;
