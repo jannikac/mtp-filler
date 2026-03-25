@@ -27,7 +27,13 @@ fn handle_write(
     keep_local: bool,
     evt_tx: Sender<BackendEvent>,
 ) -> Result<()> {
-    app_state.write_mtp_file(space_to_leave, selected_index, keep_local, evt_tx, PROGRESS_UPDATE_INTERVAL_GUI)?;
+    app_state.write_mtp_file(
+        space_to_leave,
+        selected_index,
+        keep_local,
+        evt_tx,
+        PROGRESS_UPDATE_INTERVAL_GUI,
+    )?;
     Ok(())
 }
 
@@ -135,6 +141,7 @@ pub fn run_gui() -> Result<()> {
                             }
                             Err(e) => {
                                 cmd_tx.send(BackendCommand::Refresh);
+                                window.set_is_busy(false);
                                 window.set_progress_message("".into());
                                 window.set_sent_mib(0.0);
                                 window.set_total_mib(0.0);
