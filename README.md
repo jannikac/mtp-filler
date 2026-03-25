@@ -15,6 +15,12 @@ Download the program for your machine from the [releases page](https://github.co
 
 By default, the application starts the GUI. If you prefer the CLI, run the same binary with the `cli` subcommand.
 
+### GUI usage
+
+1. Select the device and storage to use.
+2. Enter how much space should be left on the device. The remaining space will be filled.
+3. Click `Write to device`.
+
 ### Windows
 
 Run the `.exe` to start the GUI. It should work out of the box.
@@ -24,8 +30,6 @@ To use the CLI instead, run:
 ```powershell
 .\mtp-filler.exe cli
 ```
-
-The program will prompt for how much space to leave on the device, which device to select, etc.
 
 ### macOS
 
@@ -44,8 +48,6 @@ To use the CLI instead, run:
 
 If macOS blocks the app because it is from an unidentified developer, allow it in `System Settings` -> `Privacy & Security` and then run it again.
 
-The program will prompt for how much space to leave on the device, which device to select, etc.
-
 ### Linux
 
 Make the binary executable and then run it to start the GUI:
@@ -60,8 +62,6 @@ To use the CLI instead, run:
 ```bash
 ./mtp-filler cli
 ```
-
-The program will prompt for how much space to leave on the device, which device to select, etc.
 
 ## Troubleshooting
 
