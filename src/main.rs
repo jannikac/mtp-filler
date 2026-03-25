@@ -1,3 +1,4 @@
+// prevent terminal opening on windows when double click
 #![cfg_attr(windows, windows_subsystem = "windows")]
 
 use anyhow::Result;
