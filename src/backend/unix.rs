@@ -20,14 +20,15 @@ use libmtp_rs::{
 };
 use slint::SharedString;
 
-use crate::shared::{create_filler_file, create_filler_file2};
-
-mod shared;
+use crate::{
+    BackendEvent, BackendWrite,
+    shared::{create_filler_file, create_filler_file2},
+};
 
 const MIN_DESIRED_FREE_SPACE_BYTES: u64 = 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
-pub struct DeviceInfo {
+pub struct DeviceKey {
     bus_number: u32,
     dev_number: u8,
     vendor_id: u16,
@@ -36,7 +37,7 @@ pub struct DeviceInfo {
     product: String,
 }
 
-impl DeviceInfo {
+impl DeviceKey {
     fn from_raw_device(raw: &RawDevice) -> Self {
         let entry = raw.device_entry();
         Self {
@@ -50,7 +51,7 @@ impl DeviceInfo {
     }
 }
 
-impl Display for DeviceInfo {
+impl Display for DeviceKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
         write!(
             f,
@@ -65,19 +66,19 @@ impl Display for DeviceInfo {
     }
 }
 
-impl From<RawDevice> for DeviceInfo {
+impl From<RawDevice> for DeviceKey {
     fn from(value: RawDevice) -> Self {
         Self::from_raw_device(&value)
     }
 }
 
-impl From<&RawDevice> for DeviceInfo {
+impl From<&RawDevice> for DeviceKey {
     fn from(value: &RawDevice) -> Self {
         Self::from_raw_device(value)
     }
 }
 
-impl PartialEq<RawDevice> for DeviceInfo {
+impl PartialEq<RawDevice> for DeviceKey {
     fn eq(&self, other: &RawDevice) -> bool {
         let entry = other.device_entry();
         self.bus_number == other.bus_number()
@@ -121,8 +122,9 @@ impl Display for StorageInfo {
 
 #[derive(Debug)]
 pub struct SelectOption {
-    device: DeviceInfo,
+    device: DeviceKey,
     storage: StorageInfo,
+    pub label: SharedString,
 }
 
 impl SelectOption {
@@ -133,14 +135,14 @@ impl SelectOption {
 }
 
 pub struct DeviceState {
-    info: DeviceInfo,
+    info: DeviceKey,
     handle: MtpDevice,
     storages: Vec<StorageInfo>,
 }
 
 impl DeviceState {
-    fn open(raw: RawDevice) -> Result<(DeviceInfo, Self)> {
-        let info = DeviceInfo::from(&raw);
+    fn open(raw: RawDevice) -> Result<(DeviceKey, Self)> {
+        let info = DeviceKey::from(&raw);
         let mut handle = raw.open_uncached().context("Failed to open device")?;
         let storages = Self::load_storages(&mut handle)?;
 
@@ -176,24 +178,24 @@ impl DeviceState {
 }
 
 pub struct AppState {
-    pub devices: HashMap<DeviceInfo, DeviceState>,
+    pub devices: HashMap<DeviceKey, DeviceState>,
     pub select_options: Vec<SelectOption>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
-        Self {
+    pub fn new() -> Result<Self> {
+        Ok(Self {
             devices: HashMap::new(),
             select_options: vec![],
-        }
+        })
     }
 
     fn reuse_or_open(
         &self,
-        old_devices: &mut HashMap<DeviceInfo, DeviceState>,
+        old_devices: &mut HashMap<DeviceKey, DeviceState>,
         raw: RawDevice,
-    ) -> Result<(DeviceInfo, DeviceState)> {
-        let device_info = DeviceInfo::from(&raw);
+    ) -> Result<(DeviceKey, DeviceState)> {
+        let device_info = DeviceKey::from(&raw);
 
         let device_tuple = match old_devices.remove(&device_info) {
             Some(mut existing) => {
@@ -227,13 +229,18 @@ impl AppState {
         Ok(())
     }
 
-    fn get_select_options(&self) -> Vec<SelectOption> {
+    pub fn get_select_options(&self) -> Vec<SelectOption> {
         self.devices
             .iter()
             .flat_map(|(device_info, device)| {
                 device.storages.iter().map(|storage| SelectOption {
                     device: device_info.clone(),
                     storage: storage.clone(),
+                    label: SharedString::from(format!(
+                        "{}\n{}",
+                        device_info.clone(),
+                        storage.clone()
+                    )),
                 })
             })
             .collect::<Vec<_>>()
@@ -304,10 +311,11 @@ impl AppState {
     pub fn write_mtp_file(
         &self,
         space_to_leave: ByteSize,
-        selected_device: &SelectOption,
+        selected_index: usize,
         keep_local: bool,
         evt_tx: Sender<BackendEvent>,
     ) -> Result<()> {
+        let selected_device = self.select_options.get(selected_index).context("context")?;
         self.validate_desired_free_space(selected_device, space_to_leave)?;
 
         let filler_file_path = create_filler_file2(
