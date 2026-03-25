@@ -1,6 +1,5 @@
 use anyhow::Result;
 use bytesize::ByteSize;
-use slint::SharedString;
 
 pub enum BackendCommand {
     Refresh,
