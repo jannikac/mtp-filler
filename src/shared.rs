@@ -1,17 +1,15 @@
 use std::{
     borrow::Cow,
     cmp,
-    fs::{File, remove_file},
+    fs::File,
     io::{BufWriter, Write},
-    path::{Path, PathBuf},
-    str::FromStr,
+    path::PathBuf,
     sync::mpsc::Sender,
     time::{Duration, Instant},
 };
 
-use anyhow::{Result, anyhow};
+use anyhow::Result;
 use bytesize::ByteSize;
-use dialoguer::{Confirm, Input};
 use indicatif::{ProgressBar, ProgressStyle};
 use uuid::Uuid;
 
@@ -34,25 +32,29 @@ pub struct ThrottledProgressReporter {
     evt_tx: Sender<BackendEvent>,
     message: &'static str,
     last_reported_at: Option<Instant>,
-    update_interval: Duration
+    update_interval: Duration,
 }
 
 impl ThrottledProgressReporter {
-    pub fn new(evt_tx: Sender<BackendEvent>, message: &'static str, update_interval: Duration) -> Self {
+    pub fn new(
+        evt_tx: Sender<BackendEvent>,
+        message: &'static str,
+        update_interval: Duration,
+    ) -> Self {
         Self {
             evt_tx,
             message,
             last_reported_at: None,
-            update_interval
+            update_interval,
         }
     }
 
     pub fn emit(&mut self, sent: u64, total: u64) {
         let should_emit = sent == 0
             || sent >= total
-            || self.last_reported_at.is_none_or(|last_reported_at| {
-                last_reported_at.elapsed() >= self.update_interval
-            });
+            || self
+                .last_reported_at
+                .is_none_or(|last_reported_at| last_reported_at.elapsed() >= self.update_interval);
 
         if should_emit {
             self.last_reported_at = Some(Instant::now());
@@ -70,7 +72,7 @@ impl ThrottledProgressReporter {
 pub fn create_filler_file_with_progress(
     filler_size: ByteSize,
     evt_tx: &Sender<BackendEvent>,
-    update_interval: Duration
+    update_interval: Duration,
 ) -> Result<PathBuf> {
     const BUFFER_SIZE: usize = 1024;
     let filler_file_size: usize = filler_size.as_u64().try_into()?;
@@ -82,7 +84,11 @@ pub fn create_filler_file_with_progress(
     let mut buffer = [0; BUFFER_SIZE];
     let mut remaining_size = filler_file_size;
     let total_bytes = filler_file_size as u64;
-    let mut progress = ThrottledProgressReporter::new(evt_tx.clone(), "Creating filler file (1/2)", update_interval);
+    let mut progress = ThrottledProgressReporter::new(
+        evt_tx.clone(),
+        "Creating filler file (1/2)",
+        update_interval,
+    );
 
     while remaining_size > 0 {
         let to_write = cmp::min(remaining_size, buffer.len());
