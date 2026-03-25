@@ -4,7 +4,8 @@ use std::{
     fs::{File, remove_file},
     io::{Read, Write},
     path::Path,
-    sync::mpsc::Sender, time::Duration,
+    sync::mpsc::Sender,
+    time::Duration,
 };
 
 use anyhow::{Context, Result, anyhow};
@@ -231,14 +232,17 @@ impl AppState {
         storage_info: &SelectOption,
         filler_file_path: impl AsRef<Path>,
         evt_tx: Sender<BackendEvent>,
-        update_interval: Duration
+        update_interval: Duration,
     ) -> Result<()> {
         let device_state = self
             .devices
             .get(&storage_info.device)
             .context("No device found")?;
-        let mut progress =
-            ThrottledProgressReporter::new(evt_tx.clone(), "Sending to device (2/2)", update_interval);
+        let mut progress = ThrottledProgressReporter::new(
+            evt_tx.clone(),
+            "Sending to device (2/2)",
+            update_interval,
+        );
         send_file_to_device_with_callback(
             &device_state.handle,
             storage_info.storage.id.clone(),
@@ -297,7 +301,7 @@ impl AppState {
         let filler_file_path = create_filler_file_with_progress(
             self.calculate_filler_size(selected_device, space_to_leave),
             &evt_tx,
-            update_interval
+            update_interval,
         )?;
         let filler_file_path = filler_file_path.canonicalize()?;
 
