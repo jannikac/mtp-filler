@@ -2,6 +2,8 @@ name: Build and Release
 
 on:
   push:
+    branches-ignore:
+      - main
     tags:
       - "v*.*.*"
 
@@ -20,8 +22,10 @@ jobs:
       - name: Build
         run: cargo build --release
       - name: Rename binary
+        if: startsWith(github.ref, 'refs/tags/')
         run: mv target/release/mtp-filler target/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
       - name: Release
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: target/release/mtp-filler-${{ github.ref_name }}-linux-x86_64
@@ -36,9 +40,11 @@ jobs:
         run: cargo build --target x86_64-pc-windows-msvc --release
 
       - name: Rename binary
+        if: startsWith(github.ref, 'refs/tags/')
         run: move target\x86_64-pc-windows-msvc\release\mtp-filler.exe target\x86_64-pc-windows-msvc\release\mtp-filler-${{ github.ref_name }}.exe
 
       - name: Release (Windows)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: target/x86_64-pc-windows-msvc/release/mtp-filler-${{ github.ref_name }}.exe
@@ -57,9 +63,11 @@ jobs:
         run: cargo build --release
 
       - name: Rename binary
+        if: startsWith(github.ref, 'refs/tags/')
         run: mv target/release/mtp-filler target/release/mtp-filler-${{ github.ref_name }}-macos-arm64
 
       - name: Release (macOS arm64)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: target/release/mtp-filler-${{ github.ref_name }}-macos-arm64
@@ -78,9 +86,11 @@ jobs:
         run: cargo build --release
 
       - name: Rename binary
+        if: startsWith(github.ref, 'refs/tags/')
         run: mv target/release/mtp-filler target/release/mtp-filler-${{ github.ref_name }}-macos-x86_64
 
       - name: Release (macOS x86_64)
+        if: startsWith(github.ref, 'refs/tags/')
         uses: softprops/action-gh-release@v1
         with:
           files: target/release/mtp-filler-${{ github.ref_name }}-macos-x86_64
