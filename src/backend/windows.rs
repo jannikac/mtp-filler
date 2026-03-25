@@ -81,9 +81,7 @@ pub struct DeviceState {
 
 impl DeviceState {
     fn open(raw: BasicDevice, app_ident: AppIdentifiers) -> Result<(DeviceKey, Self)> {
-        let info = DeviceKey {
-            id: raw.device_id(),
-        };
+        let info = DeviceKey::from(&raw);
         let mut handle = raw
             .open(&app_ident, true)
             .context("Failed to open device")?;
@@ -128,6 +126,16 @@ impl DeviceState {
 #[derive(Debug, Clone, PartialEq, Eq, Hash)]
 pub struct DeviceKey {
     id: String,
+    friendly_name: String,
+}
+
+impl From<&BasicDevice> for DeviceKey {
+    fn from(basic_device: &BasicDevice) -> Self {
+        Self {
+            id: basic_device.device_id(),
+            friendly_name: basic_device.friendly_name().to_string(),
+        }
+    }
 }
 
 impl Display for DeviceKey {
@@ -193,9 +201,7 @@ impl AppState {
         old_devices: &mut HashMap<DeviceKey, DeviceState>,
         raw: BasicDevice,
     ) -> Result<(DeviceKey, DeviceState)> {
-        let device_key = DeviceKey {
-            id: raw.device_id(),
-        };
+        let device_key = DeviceKey::from(&raw);
 
         let device_tuple = match old_devices.remove(&device_key) {
             Some(mut existing) => {
