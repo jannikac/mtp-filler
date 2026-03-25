@@ -1,3 +1,5 @@
+#![cfg_attr(windows, windows_subsystem = "windows")]
+
 use anyhow::Result;
 use clap::{Parser, Subcommand};
 
