@@ -7,6 +7,9 @@ Fills the Storage of a MTP device. This can be used to prevent automatic OTA upd
 - Running `mtp-filler` without arguments starts the GUI.
 - Running `mtp-filler cli` starts the terminal-based CLI.
 
+
+<img width="730" height="458" alt="Screenshot_20260325_191228" src="https://github.com/user-attachments/assets/1b6d91bd-bdb0-42d2-8454-1cb378089a6a" />
+
 [![asciicast](https://asciinema.org/a/Lfd75pn3mietl5JKOXZO5f12S.svg)](https://asciinema.org/a/Lfd75pn3mietl5JKOXZO5f12S)
 
 ## Usage
