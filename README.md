@@ -2,25 +2,44 @@
 
 Fills the Storage of a MTP device. This can be used to prevent automatic OTA updates. This program uses `libmtp-rs` (bindings to `libmtp`) on Linux and `winmtp` (bindings to Windows WPD API).
 
+`mtp-filler` includes both a GUI and a CLI in the same binary:
+
+- Running `mtp-filler` without arguments starts the GUI.
+- Running `mtp-filler cli` starts the terminal-based CLI.
+
 [![asciicast](https://asciinema.org/a/Lfd75pn3mietl5JKOXZO5f12S.svg)](https://asciinema.org/a/Lfd75pn3mietl5JKOXZO5f12S)
 
 ## Usage
 
 Download the program for your machine from the [releases page](https://github.com/jannikac/mtp-filler/releases), connect your MTP device via USB, and then follow the steps for your platform.
 
+By default, the application starts the GUI. If you prefer the CLI, run the same binary with the `cli` subcommand.
+
 ### Windows
 
-Run the `.exe`. It should work out of the box.
+Run the `.exe` to start the GUI. It should work out of the box.
+
+To use the CLI instead, run:
+
+```powershell
+.\mtp-filler.exe cli
+```
 
 The program will prompt for how much space to leave on the device, which device to select, etc.
 
 ### macOS
 
-Make the binary executable and then run it:
+Make the binary executable and then run it to start the GUI:
 
 ```bash
 chmod +x ./mtp-filler
 ./mtp-filler
+```
+
+To use the CLI instead, run:
+
+```bash
+./mtp-filler cli
 ```
 
 If macOS blocks the app because it is from an unidentified developer, allow it in `System Settings` -> `Privacy & Security` and then run it again.
@@ -29,11 +48,17 @@ The program will prompt for how much space to leave on the device, which device 
 
 ### Linux
 
-Make the binary executable and then run it:
+Make the binary executable and then run it to start the GUI:
 
 ```bash
 chmod +x ./mtp-filler
 ./mtp-filler
+```
+
+To use the CLI instead, run:
+
+```bash
+./mtp-filler cli
 ```
 
 The program will prompt for how much space to leave on the device, which device to select, etc.
