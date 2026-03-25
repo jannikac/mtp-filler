@@ -110,13 +110,15 @@ impl DeviceState {
         let children = root.children()?.into_iter().collect::<Vec<_>>();
         let storages = children
             .iter()
-            .map(|storage| StorageInfo {
-                id: storage.id().into(),
-                capacity: get_capacity(handle, storage.id().into()).unwrap(),
-                free_space: get_free_space(handle, storage.id().into()).unwrap(),
-                name: storage.name().into(),
+            .map(|storage| {
+                Ok(StorageInfo {
+                    id: storage.id().into(),
+                    capacity: get_capacity(handle, storage.id().into())?,
+                    free_space: get_free_space(handle, storage.id().into())?,
+                    name: storage.name().into(),
+                })
             })
-            .collect::<Vec<_>>();
+            .collect::<Result<Vec<_>>>()?;
 
         if storages.is_empty() {
             return Err(anyhow!("No storage pools in device"));
