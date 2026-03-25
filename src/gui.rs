@@ -7,6 +7,8 @@ use bytesize::ByteSize;
 use mtp_filler::{AppState, BackendCommand, BackendEvent, BackendWrite};
 use slint::SharedString;
 
+use crate::shared::PROGRESS_UPDATE_INTERVAL_GUI;
+
 // handlers for commands
 fn handle_refresh(app_state: &mut AppState) -> Result<Vec<SharedString>> {
     app_state.refresh()?;
@@ -25,7 +27,7 @@ fn handle_write(
     keep_local: bool,
     evt_tx: Sender<BackendEvent>,
 ) -> Result<()> {
-    app_state.write_mtp_file(space_to_leave, selected_index, keep_local, evt_tx)?;
+    app_state.write_mtp_file(space_to_leave, selected_index, keep_local, evt_tx, PROGRESS_UPDATE_INTERVAL_GUI)?;
     Ok(())
 }
 
