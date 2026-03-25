@@ -18,7 +18,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
       - name: Install prerequisites
-        run: sudo apt-get update && sudo apt-get install -y pkg-config make gawk fontconfig
+        run: sudo apt-get update && sudo apt-get install -y pkg-config make gawk libfontconfig1-dev
       - name: Build
         run: cargo build --release
       - name: Rename binary
