@@ -140,7 +140,7 @@ impl From<&BasicDevice> for DeviceKey {
 
 impl Display for DeviceKey {
     fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
-        write!(f, "Device {}", self.id)
+        write!(f, "{}", self.friendly_name)
     }
 }
 
