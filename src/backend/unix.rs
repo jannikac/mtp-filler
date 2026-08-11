@@ -135,6 +135,60 @@ impl SelectOption {
     }
 }
 
+/// GVFS's MTP/gphoto2 volume monitors and KDE's `kiod` (which hosts the `mtp`
+/// kioslave) auto-claim MTP devices over USB as soon as they're plugged in,
+/// which makes `libusb_claim_interface()` fail for us with "device busy".
+/// If opening a device fails, find whichever process is holding that exact
+/// USB device node open and kill it, so retrying the open can succeed.
+fn free_busy_device(raw: &RawDevice) {
+    let device_path = format!("/dev/bus/usb/{:03}/{:03}", raw.bus_number(), raw.dev_number());
+    let self_pid = std::process::id();
+
+    let Ok(proc_entries) = std::fs::read_dir("/proc") else {
+        return;
+    };
+
+    for entry in proc_entries.flatten() {
+        let Ok(pid) = entry.file_name().to_string_lossy().parse::<u32>() else {
+            continue;
+        };
+        if pid == self_pid {
+            continue;
+        }
+
+        let fd_dir = entry.path().join("fd");
+        let Ok(fds) = std::fs::read_dir(&fd_dir) else {
+            continue;
+        };
+        let holds_device = fds.flatten().any(|fd| {
+            std::fs::read_link(fd.path())
+                .map(|target| target == Path::new(&device_path))
+                .unwrap_or(false)
+        });
+        if !holds_device {
+            continue;
+        }
+
+        let comm = std::fs::read_to_string(entry.path().join("comm")).unwrap_or_default();
+        let comm = comm.trim().to_lowercase();
+        let is_known_mtp_handler = ["gvfs", "kiod", "kio_mtp", "gphoto2"]
+            .iter()
+            .any(|needle| comm.contains(needle));
+
+        if is_known_mtp_handler {
+            eprintln!(
+                "mtp-filler: '{comm}' (pid {pid}) is holding {device_path} open, killing it to free the device"
+            );
+            unsafe {
+                libc::kill(pid as libc::pid_t, libc::SIGTERM);
+            }
+        }
+    }
+
+    // Give the killed process a moment to actually release the USB interface.
+    std::thread::sleep(Duration::from_millis(300));
+}
+
 pub struct DeviceState {
     info: DeviceKey,
     handle: MtpDevice,
@@ -144,7 +198,16 @@ pub struct DeviceState {
 impl DeviceState {
     fn open(raw: RawDevice) -> Result<(DeviceKey, Self)> {
         let info = DeviceKey::from(&raw);
-        let mut handle = raw.open_uncached().context("Failed to open device")?;
+        let mut handle = match raw.open_uncached() {
+            Some(handle) => handle,
+            None => {
+                free_busy_device(&raw);
+                raw.open_uncached().context(
+                    "Failed to open device: it is likely claimed by GVFS or KDE's MTP handling; \
+                     tried to free it automatically but it is still busy",
+                )?
+            }
+        };
         let storages = Self::load_storages(&mut handle)?;
 
         Ok((
