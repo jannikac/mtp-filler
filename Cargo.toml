@@ -30,3 +30,4 @@ widestring = "1.2.1"
 
 [target.'cfg(unix)'.dependencies]
 libmtp-rs = "0.7.7"
+libc = "0.2"

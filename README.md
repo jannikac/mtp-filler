@@ -83,9 +83,15 @@ chmod +x ./mtp-filler
 
 ### Device is busy or cannot be opened
 
-This usually means the device was already mounted or another program automatically claimed it, so `mtp-filler` cannot access it at the same time.
+This usually means another program automatically claimed the device over MTP before `mtp-filler` could, so `libusb_claim_interface()` fails. The most common culprits on Linux are GVFS's MTP/gphoto2 volume monitors and KDE's `kiod` (which hosts the `mtp` kioslave) — both auto-claim MTP devices as soon as they're plugged in, even with no file manager window open.
 
-Close the file manager and any other program that may be using the device, unmount or disconnect it if needed, and then try again. On KDE, `kio` often grabs MTP devices automatically after they are connected.
+`mtp-filler` detects this automatically on Linux: if opening the device fails, it looks for a process holding that USB device node open, kills it, and retries once. If it's still busy afterwards, or you're on a platform where this doesn't apply, you can run the same recovery manually:
+
+```bash
+./scripts/fix-mtp-busy.sh
+```
+
+If it's still busy after that, close the file manager and any other program that may be using the device, unmount or disconnect it if needed, and try again.
 
 ### macOS says the app is from an unidentified developer
 
