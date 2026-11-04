@@ -136,3 +136,25 @@ That makes the build script skip the vendored copy and discover `libmtp` through
 ```bash
 cargo build --release
 ```
+
+## Releasing
+
+Releases are built and published automatically by [`.github/workflows/build-and-release.yml`](.github/workflows/build-and-release.yml) whenever a tag matching `v*.*.*` is pushed. The workflow builds the binary for Linux, Windows, macOS arm64, and macOS Intel, and attaches all four to a new GitHub Release named after the tag.
+
+To cut a new release:
+
+1. Bump `version` in `Cargo.toml` and run `cargo build` once so `Cargo.lock` picks it up.
+2. Commit the version bump, e.g.:
+
+   ```bash
+   git commit -am "vX.Y.Z"
+   ```
+
+3. Tag the commit and push the tag:
+
+   ```bash
+   git tag vX.Y.Z
+   git push origin vX.Y.Z
+   ```
+
+Pushing the tag triggers the workflow, which builds all four platform binaries and publishes them to a new release at `vX.Y.Z`. Pushing to a regular branch (not `main`, no tag) only builds the binaries as workflow artifacts without creating a release.
