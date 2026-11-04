@@ -10,8 +10,8 @@ import {
 } from "std-widgets.slint";
 export component MainWindow inherits Window {
     title: "mtp-filler";
-    width: 600px;
-    height: 300px;
+    preferred-width: 600px;
+    preferred-height: 380px;
     background: Palette.background;
 
     in property <[string]> combo_options: [];
@@ -34,11 +34,13 @@ export component MainWindow inherits Window {
     VerticalBox {
         spacing: 16px;
         Text {
+            vertical-stretch: 0;
             text: "Notice: Your Kindle may appear as a Scribe or some other device.";
             wrap: word-wrap;
         }
 
         VerticalLayout {
+            vertical-stretch: 0;
             Text {
                 text: "Select device to use";
             }
@@ -68,6 +70,7 @@ export component MainWindow inherits Window {
         property <string> space_to_leave: "10MiB";
 
         VerticalLayout {
+            vertical-stretch: 0;
             Text {
                 text: "Space to leave on device";
             }
@@ -83,11 +86,13 @@ export component MainWindow inherits Window {
         }
 
         keep_local_checkbox := CheckBox {
+            vertical-stretch: 0;
             text: "Keep local filler file after write";
             enabled: root.ui_enabled;
         }
 
         Button {
+            vertical-stretch: 0;
             text: "Write to device";
             enabled: root.ui_enabled;
             clicked => {
@@ -95,7 +100,12 @@ export component MainWindow inherits Window {
             }
         }
 
+        Rectangle {
+            vertical-stretch: 1;
+        }
+
         VerticalLayout {
+            vertical-stretch: 0;
             Text {
                 visible: root.progress_message != "";
                 text: root.progress_message;
