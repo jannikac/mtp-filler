@@ -94,7 +94,7 @@ export component MainWindow inherits Window {
         Button {
             vertical-stretch: 0;
             text: "Write to device";
-            enabled: root.ui_enabled;
+            enabled: root.ui_enabled && device_combo.current-index >= 0 && device_combo.current-index < root.combo_options.length;
             clicked => {
                 root.write_clicked(space_to_leave, device_combo.current-index, keep_local_checkbox.checked)
             }
