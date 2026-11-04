@@ -10,6 +10,7 @@ use std::{
 
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
+use itertools::{Either, Itertools};
 use slint::SharedString;
 use widestring::U16CString;
 use winmtp::{
@@ -87,7 +88,7 @@ impl DeviceState {
         let info = DeviceKey::from(&raw);
         let mut handle = raw
             .open(&app_ident, true)
-            .context("Failed to open device")?;
+            .context("Could not open device, it may be in use by another application")?;
         let storages = Self::load_storages(&mut handle)?;
 
         Ok((
@@ -164,6 +165,7 @@ impl Display for StorageInfo {
 pub struct AppState {
     pub devices: HashMap<DeviceKey, DeviceState>,
     pub select_options: Vec<SelectOption>,
+    pub device_warnings: Vec<String>,
     app_ident: AppIdentifiers,
     provider: Provider,
 }
@@ -173,6 +175,7 @@ impl AppState {
         Ok(Self {
             devices: HashMap::new(),
             select_options: vec![],
+            device_warnings: vec![],
             app_ident: make_current_app_identifiers!(),
             provider: Provider::new()?,
         })
@@ -182,11 +185,18 @@ impl AppState {
         let mut old_devices = std::mem::take(&mut self.devices);
         let basic_devices = self.provider.enumerate_devices()?;
 
-        let devices = basic_devices
+        let (devices, warnings): (HashMap<_, _>, Vec<_>) = basic_devices
             .into_iter()
-            .map(|raw| self.reuse_or_open(&mut old_devices, raw))
-            .collect::<Result<HashMap<_, _>>>()?;
+            .partition_map(|raw| {
+                let device_key = DeviceKey::from(&raw);
+                match self.reuse_or_open(&mut old_devices, raw) {
+                    Ok(device_tuple) => Either::Left(device_tuple),
+                    Err(e) => Either::Right(format!("Could not open {device_key}: {e}")),
+                }
+            });
+
         self.devices = devices;
+        self.device_warnings = warnings;
         Ok(())
     }
 
@@ -300,7 +310,7 @@ impl AppState {
         let selected_device = self
             .select_options
             .get(selected_index)
-            .context("failed to select device")?;
+            .context("No device selected")?;
         self.validate_desired_free_space(selected_device, space_to_leave)?;
 
         let filler_file_path = create_filler_file_with_progress(

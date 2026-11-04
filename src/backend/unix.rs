@@ -10,6 +10,7 @@ use std::{
 use anyhow::{Context, Result, anyhow};
 use bytesize::ByteSize;
 use chrono::{DateTime, Utc};
+use itertools::{Either, Itertools};
 use libmtp_rs::{
     device::{
         MtpDevice, StorageSort,
@@ -144,7 +145,9 @@ pub struct DeviceState {
 impl DeviceState {
     fn open(raw: RawDevice) -> Result<(DeviceKey, Self)> {
         let info = DeviceKey::from(&raw);
-        let mut handle = raw.open_uncached().context("Failed to open device")?;
+        let mut handle = raw
+            .open_uncached()
+            .context("Could not open device, it may be in use by another application")?;
         let storages = Self::load_storages(&mut handle)?;
 
         Ok((
@@ -181,6 +184,7 @@ impl DeviceState {
 pub struct AppState {
     pub devices: HashMap<DeviceKey, DeviceState>,
     pub select_options: Vec<SelectOption>,
+    pub device_warnings: Vec<String>,
 }
 
 impl AppState {
@@ -188,6 +192,7 @@ impl AppState {
         Ok(Self {
             devices: HashMap::new(),
             select_options: vec![],
+            device_warnings: vec![],
         })
     }
 
@@ -211,11 +216,18 @@ impl AppState {
     fn refresh_devices(&mut self) -> Result<()> {
         let mut old_devices = std::mem::take(&mut self.devices);
 
-        let devices = detect_raw_devices()?
+        let (devices, warnings): (HashMap<_, _>, Vec<_>) = detect_raw_devices()?
             .into_iter()
-            .map(|raw| self.reuse_or_open(&mut old_devices, raw))
-            .collect::<Result<HashMap<_, _>>>()?;
+            .partition_map(|raw| {
+                let device_key = DeviceKey::from(&raw);
+                match self.reuse_or_open(&mut old_devices, raw) {
+                    Ok(device_tuple) => Either::Left(device_tuple),
+                    Err(e) => Either::Right(format!("Could not open {device_key}: {e}")),
+                }
+            });
+
         self.devices = devices;
+        self.device_warnings = warnings;
         Ok(())
     }
 
@@ -317,7 +329,10 @@ impl AppState {
         evt_tx: Sender<BackendEvent>,
         update_interval: Duration,
     ) -> Result<()> {
-        let selected_device = self.select_options.get(selected_index).context("context")?;
+        let selected_device = self
+            .select_options
+            .get(selected_index)
+            .context("No device selected")?;
         self.validate_desired_free_space(selected_device, space_to_leave)?;
 
         let filler_file_path = create_filler_file_with_progress(

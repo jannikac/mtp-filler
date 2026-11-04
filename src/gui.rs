@@ -10,14 +10,15 @@ use slint::SharedString;
 use crate::shared::PROGRESS_UPDATE_INTERVAL_GUI;
 
 // handlers for commands
-fn handle_refresh(app_state: &mut AppState) -> Result<Vec<SharedString>> {
+fn handle_refresh(app_state: &mut AppState) -> Result<(Vec<SharedString>, Vec<String>)> {
     app_state.refresh()?;
-    let result = app_state
+    let options = app_state
         .get_select_options()
         .iter()
         .map(|v| v.label.clone())
         .collect::<Vec<_>>();
-    Ok(result)
+    let warnings = app_state.device_warnings.clone();
+    Ok((options, warnings))
 }
 
 fn handle_write(
@@ -107,8 +108,10 @@ pub fn run_gui() -> Result<()> {
                 let window = weak.upgrade().unwrap();
                 match evt {
                     BackendEvent::RefreshFinished(refresh_result) => match refresh_result {
-                        Ok(options) => {
-                            window.set_select_device_error(slint::SharedString::from(""));
+                        Ok((options, warnings)) => {
+                            window.set_select_device_error(slint::SharedString::from(
+                                warnings.join("\n"),
+                            ));
                             window.set_combo_options(slint::ModelRc::new(slint::VecModel::from(
                                 options,
                             )));

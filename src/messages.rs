@@ -17,6 +17,6 @@ pub enum BackendWrite {
 }
 
 pub enum BackendEvent {
-    RefreshFinished(anyhow::Result<Vec<slint::SharedString>>),
+    RefreshFinished(anyhow::Result<(Vec<slint::SharedString>, Vec<String>)>),
     Write(BackendWrite),
 }

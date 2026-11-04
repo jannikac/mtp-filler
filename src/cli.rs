@@ -62,6 +62,10 @@ pub fn run_cli() -> Result<()> {
     let mut app_state = AppState::new()?;
     app_state.refresh()?;
 
+    for warning in &app_state.device_warnings {
+        eprintln!("Warning: {warning}");
+    }
+
     let selected_index = prompt_device(&app_state)?;
     let desired_free_space = prompt_desired_free_space(&app_state, selected_index)?;
     let keep_local = prompt_keep_local()?;
