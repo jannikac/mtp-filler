@@ -63,6 +63,7 @@ export component MainWindow inherits Window {
             }
 
             if root.select_device_error != "": Text {
+                wrap: word-wrap;
                 text: root.select_device_error;
             }
         }
