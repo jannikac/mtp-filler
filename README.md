@@ -36,20 +36,23 @@ To use the CLI instead, run:
 
 ### macOS
 
-Make the binary executable and then run it to start the GUI:
+Make the binary executable, remove the quarantine flag and then run it to start the GUI:
 
 ```bash
 chmod +x ./mtp-filler
+xattr -d com.apple.quarantine ./mtp-filler
 ./mtp-filler
 ```
+
+The binary isn't signed by Apple, so macOS blocks it after download. Removing the quarantine flag tells macOS you trust this file. If `xattr` reports `No such xattr`, the flag wasn't set and you can continue.
+
+If you'd rather not use `xattr`, skip that step. When macOS blocks the app, go to `System Settings` -> `Privacy & Security`, click `Open Anyway`, and run it again.
 
 To use the CLI instead, run:
 
 ```bash
 ./mtp-filler cli
 ```
-
-If macOS blocks the app because it is from an unidentified developer, allow it in `System Settings` -> `Privacy & Security` and then run it again.
 
 ### Linux
 
